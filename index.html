@@ -1,0 +1,1901 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Фонетический тренажёр</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: one study column. Home → section pages (Теория / Тест по теории / Практика) → mixed exam.
+   Section colour runs through cards, tabs and chips; English examples are set in a textbook-like serif with real tonetic marks. */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --sunk:#E7EBF1; --ink:#172033; --muted:#596379; --opt:#8C95A8; --line:#D6DCE6;
+  --accent:#2F47B5; --ok:#16804A; --bad:#BE3A2F; --hl:#FFF0B3; --hl-ink:#172033;
+  --c-s1:#0D7A84; --c-s2:#7440AE; --c-s3:#A86400; --c-s4:#BF3A69; --c-red:#2D7A33; --c-exam:#2F47B5;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-en:"Gentium Book Plus","Noto Serif","Times New Roman",Times,serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F131B; --surface:#181D28; --sunk:#131822; --ink:#E5E9F2; --muted:#9CA4B6; --opt:#6F788C; --line:#2A3140;
+  --accent:#95A8FF; --ok:#4CC683; --bad:#FF7D70; --hl:#4C4313; --hl-ink:#FFF2C2;
+  --c-s1:#3FC2CC; --c-s2:#B58AF0; --c-s3:#EDA94A; --c-s4:#F27DA6; --c-red:#6FCB75; --c-exam:#95A8FF; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F131B; --surface:#181D28; --sunk:#131822; --ink:#E5E9F2; --muted:#9CA4B6; --opt:#6F788C; --line:#2A3140;
+  --accent:#95A8FF; --ok:#4CC683; --bad:#FF7D70; --hl:#4C4313; --hl-ink:#FFF2C2;
+  --c-s1:#3FC2CC; --c-s2:#B58AF0; --c-s3:#EDA94A; --c-s4:#F27DA6; --c-red:#6FCB75; --c-exam:#95A8FF; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+button,.tok{touch-action:manipulation}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+.en{font-family:var(--f-en)}
+h1,h2,h3{text-wrap:balance}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,4.4vw,32px);line-height:1.15;margin:0;letter-spacing:-.01em}
+h2{font-family:var(--f-display);font-weight:500;font-size:19px;margin:0 0 12px}
+h3{font-family:var(--f-display);font-weight:500;font-size:15px;margin:0}
+.muted{color:var(--muted)}
+.top{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.crumbs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.crumbs button{border:0;background:none;padding:0;cursor:pointer;color:var(--accent);font-weight:500}
+
+/* home */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:12px;margin-bottom:28px}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:16px;text-align:left;cursor:pointer;display:grid;gap:6px;align-content:start;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--c)}
+.card:hover{border-color:var(--c)}
+.card .num{font-family:var(--f-display);font-weight:700;font-size:24px;color:var(--c);line-height:1}
+.card .ttl{font-weight:600}
+.card .sub{font-size:13.5px;color:var(--muted)}
+.card .cnt{font-size:12.5px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.scheme{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
+.scheme .panel{margin:0}
+.scheme ul{margin:6px 0 0;padding-left:18px;display:grid;gap:5px}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:6px 14px;margin-top:8px}
+.legend span{display:flex;gap:10px;align-items:baseline;font-size:13.5px}
+.legend b{font-family:var(--f-en);font-size:22px;font-weight:400;min-width:26px;text-align:center;line-height:1}
+
+/* section header + tabs */
+.sechead{display:grid;gap:4px;margin-bottom:16px;border-left:4px solid var(--c);padding-left:12px}
+.sechead .num{font-family:var(--f-display);font-weight:700;color:var(--c);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px}
+.tab{border:0;background:transparent;padding:9px 6px;border-radius:9px;cursor:pointer;font-weight:500;color:var(--muted);text-align:center}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0/.08)}
+
+/* theory */
+.legend-line{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin-bottom:14px}
+.legend-line .must{color:var(--ink);font-weight:600}
+.legend-line .lg-opt{color:var(--opt)}
+.ph{display:grid;gap:8px}
+.ph header{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;justify-content:space-between}
+.chip-s{font-size:12.5px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:999px;padding:2px 9px;font-weight:500}
+.cmt{font-family:var(--f-en);font-size:16px;line-height:1.55}
+.cmt .o{color:var(--opt)}
+.expl{font-size:13.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+.expl .en{font-size:15px}
+.exs{display:flex;flex-wrap:wrap;gap:4px 16px;font-family:var(--f-en);font-size:17px}
+.block-title{display:flex;gap:10px;align-items:baseline;margin:22px 0 8px}
+.block-title h3{font-size:16px}
+.block-note{font-size:14px;color:var(--muted);margin:0 0 10px;max-width:72ch}
+.case{display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 14px;padding:14px 0;border-top:1px solid var(--line)}
+.case:first-of-type{border-top:0}
+.case .glyph{font-family:var(--f-en);font-size:30px;line-height:1;color:var(--c);text-align:center;padding-top:2px;white-space:nowrap}
+.case .body{display:grid;gap:6px;min-width:0}
+.case .tag{font-weight:600}
+.case .note{font-size:13.5px;color:var(--muted)}
+.mine{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:6px;font-weight:400}
+
+/* marked english */
+.sent{font-family:var(--f-en);font-size:clamp(18px,3.4vw,22px);line-height:1.9;margin:0;text-wrap:pretty;word-spacing:.04em}
+.sent.small{font-size:16.5px;line-height:1.8}
+.sent b{font-weight:700}
+.ctx{color:var(--muted)}
+.wave{display:inline-block;width:.55em;height:1.15em;vertical-align:-.22em;margin:0 .18em}
+.wave path{fill:none;stroke:currentColor;stroke-width:1.5}
+.bar{display:inline-block;width:1.5px;height:1.05em;background:currentColor;vertical-align:-.15em;margin:0 .35em}
+.j{position:relative;display:inline-block}
+.j::after{content:"";position:absolute;left:-1px;right:-1px;bottom:-.22em;height:.36em;border:1.6px solid currentColor;border-top:0;border-radius:0 0 50% 50%/0 0 100% 100%}
+.mk{font-weight:400}
+.tb{display:inline-block;margin-left:8px;vertical-align:middle;font-family:var(--f-body);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;line-height:1.6}
+
+/* chips + controls */
+.ctrls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13.5px}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;user-select:none}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+
+/* runner */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px}
+.qmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.qmeta .kind{color:var(--c);font-weight:600}
+.pbar{height:4px;background:var(--sunk);border-radius:4px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.hint{font-size:14px;background:var(--sunk);border-radius:10px;padding:8px 12px}
+.hint b{font-weight:600}
+.task{font-weight:600;font-size:14.5px}
+.opts{display:grid;gap:6px}
+.opt{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;cursor:pointer;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}
+.opt kbd{font-family:var(--f-body);font-size:11px;color:var(--muted);grid-row:1/3;align-self:center}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+button:disabled{cursor:default}
+.right{border-color:var(--ok)!important;background:color-mix(in srgb,var(--ok) 12%,var(--surface))!important}
+.wrong{border-color:var(--bad)!important;background:color-mix(in srgb,var(--bad) 10%,var(--surface))!important}
+.dim{opacity:.5}
+.fb{background:var(--sunk);border-radius:12px;padding:14px;display:grid;gap:8px}
+.verdict{font-weight:600}
+.verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)}
+.say{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn.good{border-color:var(--ok);color:var(--ok)}
+.btn.badb{border-color:var(--bad);color:var(--bad)}
+
+/* marking */
+.markline{font-family:var(--f-en);font-size:clamp(19px,3.6vw,23px);line-height:2.3;display:flex;flex-wrap:wrap;align-items:baseline;row-gap:2px}
+.tok{border:0;background:none;padding:0 .14em;margin:0;border-radius:6px;cursor:pointer;font-family:inherit;font-size:inherit;line-height:1.5;border-bottom:2px solid transparent}
+.tok:hover{background:var(--sunk)}
+.tok.sel{background:var(--hl);color:var(--hl-ink)}
+.tok.terr{border-bottom-color:var(--bad)}
+.tok:disabled{cursor:default;color:inherit}
+.tok b{font-weight:700}
+.bnd{display:inline-flex;align-items:center;color:var(--ink)}
+.bnd.berr{color:var(--bad)}
+.miss{display:inline-block;width:6px;height:1.1em;border-left:2px dashed var(--bad);margin:0 .2em;vertical-align:-.15em}
+.palette{display:grid;gap:8px;background:var(--sunk);border-radius:12px;padding:10px}
+.prow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.prow .lbl{min-width:96px}
+.pk{border:1px solid var(--line);background:var(--surface);border-radius:9px;cursor:pointer;min-width:46px;padding:4px 8px;display:grid;justify-items:center;line-height:1.1}
+.pk .g{font-family:var(--f-en);font-size:22px;height:24px;display:flex;align-items:center}
+.pk small{font-size:10.5px;color:var(--muted)}
+.pk[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.pk[aria-pressed="true"] small{color:var(--bg)}
+.selinfo{font-size:13px;color:var(--muted)}
+.cmp{display:grid;gap:4px;font-size:14px}
+.cmp .row{display:flex;gap:8px;align-items:baseline}
+.cmp .row .lbl{min-width:70px}
+.ok{color:var(--ok)} .bad{color:var(--bad)}
+
+/* results */
+.score{font-family:var(--f-display);font-weight:700;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.score small{font-size:17px;color:var(--muted);font-weight:500}
+.errs{display:grid;gap:12px}
+.err{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:6px}
+
+
+/* v2: tonograms, pieces, pairs, mirror */
+.tgwrap{overflow-x:auto;margin:-4px 0 2px;color:var(--ink)}
+.tg{display:block;max-width:none}
+.tg .st{stroke:var(--line);stroke-width:1.2;fill:none}
+.tg circle{fill:currentColor}
+.tg .th{stroke:currentColor;stroke-width:3.4;stroke-linecap:round;fill:none}
+.tg .nu{stroke:currentColor;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.tg .bd{stroke:var(--muted);stroke-width:1.3;fill:none}
+.built{min-height:2.2em;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;line-height:1.9}
+.piece{font-family:var(--f-en);font-size:15.5px;line-height:1.35;border-radius:8px;padding:3px 8px;display:inline}
+.piece.in{background:color-mix(in srgb,var(--ok) 14%,transparent);padding:2px 4px}
+.caret{color:var(--muted)}
+.bank{display:flex;flex-wrap:wrap;gap:6px}
+.btn-piece{border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;display:inline-block}
+.btn-piece:hover:not(:disabled){border-color:var(--ink)}
+.errline{display:flex;flex-wrap:wrap;gap:6px}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.pair>div{background:var(--sunk);border-radius:12px;padding:10px 12px;min-width:0}
+table.mirror{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+table.mirror th,table.mirror td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+table.mirror thead th{font-size:12px;color:var(--muted);font-weight:600}
+table.mirror tr.cur th{color:var(--c)}
+.mc{display:inline-block;border-radius:6px;padding:2px 6px;margin:2px 3px 2px 0;font-size:12px;background:color-mix(in srgb,var(--k) 16%,transparent);color:var(--ink);border:1px solid color-mix(in srgb,var(--k) 45%,transparent)}
+.mc-lr{--k:#2F6FD6}.mc-fall{--k:#C2412D}.mc-fr{--k:#8A3FB8}.mc-ml{--k:#7A7F8C}.mc-low{--k:#2F6FD6}.mc-long{--k:#A8661A}.mc-head{--k:#0D8A6A}.mc-pre{--k:#4FA38E}.mc-tail{--k:#B08A00}.mc-nuc{--k:#C2387A}
+@media (max-width:560px){.tab{font-size:13px;padding:8px 2px}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+
+@media (max-width:560px){
+  .case{grid-template-columns:40px minmax(0,1fr)}
+  .case .glyph{font-size:24px}
+  .prow .lbl{min-width:100%}
+  .q{padding:14px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+/* =========================================================================
+   CONTENT — single source for the trainer page and the answer-key document.
+   Tonetic marks (as in the textbook):
+     ˈ stress (head)   ˌ low partial stress   · partial stress
+     ˋ High Fall   ˎ Low Fall   ˏ Low Rise   ˊ High / Mid-High Rise
+     ˇ Fall-Rise (undivided)   >  Mid Level
+     ~  boundary between intonation groups (wavy line)   |  boundary with a longer pause
+   Comment templates: {{...}} = optional part (можно не говорить);
+     {p} phrase, {N} number of groups, {FR} "a Fall-Rise" / "a Fall-Rise Divided",
+     {emo} politeness / affection / criticism, {after} auto note, {dir} Rise / Fall.
+   ========================================================================= */
+
+const SECTIONS = [
+  { id: 's1', num: 'I',   title: 'Section I',   sound: 'Loss of plosion · Nasal plosion · Lateral plosion', inton: 'Intonation of non-final parts of utterances', fullComment: false },
+  { id: 's2', num: 'II',  title: 'Section II',  sound: 'Fricative plosion · Alveolars before [θ, ð] · Clusters with [w]', inton: 'Intonation of parentheses', fullComment: true },
+  { id: 's3', num: 'III', title: 'Section III', sound: 'Linking [r]', inton: 'Intonation of reporting phrases and reported speech', fullComment: true },
+  { id: 's4', num: 'IV',  title: 'Section IV',  sound: 'Consonant clusters with [r]', inton: 'Intonation of direct address', fullComment: false },
+];
+
+/* ---------------------------- SOUND PHENOMENA ---------------------------- */
+/* items: junction letters in [ ]; for r-clusters "word|cluster|condition" */
+const SOUND = [
+  // ---- Section I (на зачёте: только формула, без объяснения)
+  { id: 'lp-c', sec: 's1', name: 'Complete loss of plosion', tag: 'Одинаковое место артикуляции',
+    tpl: 'At the junction of two plosive consonants [{a}] and [{b}] having the same place of articulation, there is a complete loss of plosion of the first consonant.',
+    ru: 'Смычка снимается беззвучно, взрыв слышен только после второго согласного.',
+    items: ['ho[t d]og|t d','ol[d t]own|d t','bi[g c]ar|g k','sto[p p]laying|p p','gra[b b]ag|b b','ca[t t]oy|t t','goo[d d]og|d d','pin[k c]ake|k k','shi[p b]ell|p b','gol[d d]ust|d d','hea[d t]eacher|d t','bi[g g]ame|g g','whi[te t]ea|t t','ou[td]oor|t d','bla[ck g]loves|k g','li[p b]alm|p b'] },
+  { id: 'lp-i', sec: 's1', name: 'Incomplete loss of plosion', tag: 'Разное место артикуляции',
+    tpl: 'At the junction of two plosive consonants [{a}] and [{b}] having different places of articulation, there is an incomplete loss of plosion of the first consonant.',
+    ru: 'Смычка первого согласного не снимается, пока не началась артикуляция второго. Взрыв первого очень слабый, отчётливый взрыв слышен только после второго согласного.',
+    items: ['cha[pt]er|p t','fa[ct]|k t','la[pt]op|p t','su[bt]itle|b t','jum[ped]|p t','loo[ked]|k t','hu[gged]|g d','gra[bbed]|b d','ho[t c]offee|t k','ol[d b]ook|d b','bi[g b]ox|g b','sto[p t]alking|p t','sa[d g]irl|d g','pin[k d]ress|k d','bla[ckb]ird|k b','go[t b]ack|t b'] },
+  { id: 'nasal', sec: 's1', name: 'Nasal plosion', tag: 'Взрыв через нос',
+    tpl: 'At the junction of the plosive consonant [{a}] with the nasal sonorant [{b}], the phenomenon of nasal plosion takes place.',
+    ru: 'Артикуляция сонанта начинается, когда артикуляция взрывного ещё не закончена. Смычка во рту не снимается, а воздух выходит через носовую полость.',
+    items: ['ki[tten]|t n','ro[tten]|t n','wri[tten]|t n','fla[tten]|t n','ea[ten]|t n','co[tton]|t n','gar[den]|d n','su[dden]|d n','ha[dn]’t|d n','di[dn]’t|d n','coul[dn]’t|d n','goo[d n]ews|d n','ge[t m]arried|t m','su[bm]arine|b m','a[t m]idnight|t m'] },
+  { id: 'lateral', sec: 's1', name: 'Lateral plosion', tag: 'Взрыв по бокам языка',
+    tpl: 'At the junction of the plosive consonant [{a}] with the lateral sonorant [l], the phenomenon of lateral plosion takes place.',
+    ru: 'Взрыв происходит во время произнесения сонанта: воздух проходит по бокам языка, опущенным для [l].',
+    items: ['ca[ttle]|t l','bo[ttle]|t l','mi[ddle]|d l','sa[ddle]|d l','a[pple]|p l','ta[ble]|b l','bu[bble]|b l','ea[gle]|g l','[pl]an|p l','[bl]ack|b l','[gl]ass|g l','[cl]ock|k l','ba[d l]uck|d l','a[t l]unch|t l','ol[d l]ady|d l'] },
+
+  // ---- Section II (на зачёте: формула + объяснение)
+  { id: 'fric', sec: 's2', name: 'Fricative plosion', tag: 'Фрикативный взрыв',
+    tpl: 'At the junction of the plosive consonant [{a}] with the fricative consonant [{b}], the phenomenon of fricative plosion takes place. The plosive consonant [{a}] has its release during the pronunciation of the fricative [{b}]. It is the result of close coarticulation of adjacent consonants.',
+    ru: 'Взрывной размыкается во время произнесения следующего фрикативного согласного. Это следствие тесной коартикуляции соседних согласных.',
+    items: ['boo[ks]|k s','hea[ds]|d z','ma[ps]|p s','be[ds]|d z','ca[ps]|p s','wee[ks]|k s','dro[ps]|p s','bi[g s]mile|g s','ho[t s]oup|t s','re[d s]hoes|d ʃ','ha[t sh]op|t ʃ','goo[d v]iew|d v','bla[ck f]ox|k f','tha[t f]ilm|t f','ste[p h]ere|p h'] },
+  { id: 'dental', sec: 's2', name: 'Alveolar consonants before [θ, ð]', tag: 'Альвеолярные становятся зубными',
+    tpl: 'At the junction of the alveolar consonant [{a}] and the interdental consonant [{b}], regressive assimilation affecting the place of articulation takes place. Under the influence of the interdental [{b}] the alveolar [{a}] becomes dental.',
+    ru: 'Под влиянием межзубных [θ, ð] альвеолярные согласные произносятся как зубные варианты (аллофоны). Влияние идёт справа налево, поэтому ассимиляция регрессивная.',
+    items: ['ei[ghth]|t θ','wi[dth]|d θ','brea[dth]|d θ','fi[lth]|l θ','seve[nth]|n θ','eleve[nth]|n θ','te[nth]|n θ','mo[nth]|n θ','ge[t th]ere|t ð','rea[d th]e book|d ð','i[s th]at|z ð','wa[s th]ere|z ð','te[ll th]em|l ð','a[ll th]ree|l θ','o[n th]e table|n ð','wi[n th]e game|n ð'] },
+  { id: 'w-double', sec: 's2', name: '[tw, kw, sw] — double assimilation', tag: 'Оглушение ↔ огубление',
+    tpl: 'In the cluster [{c}w] double (reciprocal) assimilation takes place: a) progressive assimilation affecting the work of the vocal cords; b) regressive assimilation affecting the position of lips. Under the influence of the voiceless [{c}] the sonorant [w] becomes devoiced; under the influence of the bilabial sonorant [w] the consonant [{c}] becomes lip-rounded (labialized).',
+    ru: 'Глухие [t, k, s] оглушают [w] (прогрессивно, работа голосовых связок), а губной [w] огубляет [t, k, s] (регрессивно, положение губ). Оглушение сильнее всего после [t, k] в ударном слоге.',
+    items: ['[tw]in|t','[tw]eet|t','[tw]inkle|t','[tw]ice|t','[qu]ite|k','[qu]ality|k','[qu]arrel|k','[qu]iz|k','[qu]ote|k','[sw]eater|s','[sw]an|s','[sw]ing|s','[sw]ift|s','[sw]eat|s'] },
+  { id: 'w-reg', sec: 's2', name: '[dw, gw] — regressive assimilation', tag: 'Только огубление',
+    tpl: 'In the cluster [{c}w] regressive assimilation affecting the position of lips takes place. Under the influence of the bilabial sonorant [w] the consonant [{c}] becomes lip-rounded (labialized).',
+    ru: '[w] огубляет предшествующие [d, g]. Оглушения нет: [d, g] звонкие.',
+    items: ['[dw]indle|d','[dw]arf|d','[dw]elling|d','E[dw]ard|d','pen[gu]in|g','lin[gu]ist|g','an[gu]ish|g','distin[gu]ish|g','extin[gu]ish|g','[Gw]en|g'] },
+
+  // ---- Section III (на зачёте: формула + объяснение)
+  { id: 'r-link', sec: 's3', name: 'Linking [r]', tag: '«r» есть в написании',
+    tpl: 'At the junction of a word ending in [{v}] and a word beginning with a vowel, linking [r] is used. The first word ends in {sp} in spelling.',
+    ru: 'Слово кончается на [ə] (в том числе [ɪə], [eə]), [ɑː], [ɔː] или [ɜː], следующее начинается с гласного, а в написании есть «r» или «re». Linking [r] — норма литературного произношения.',
+    items: ['clea[r e]nough|ɪə|r','fa[r e]nough|ɑː|r','mo[re i]nformation|ɔː|re','he[r e]yes|ɜː|r','ca[r e]ngine|ɑː|r','dinne[r i]s ready|ə|r','pape[r o]r pen|ə|r','the doo[r i]s open|ɔː|r','fi[re a]larm|aɪə|re','mothe[r a]nd father|ə|r','afte[r a]ll|ə|r','bette[r o]ff|ə|r','soone[r o]r later|ə|r','he[re a]nd there|ɪə|re','you[r a]rm|ɔː|r','fou[r a]pples|ɔː|r','wate[r i]s cold|ə|r','summe[r a]nd winter|ə|r'] },
+  { id: 'r-intr', sec: 's3', name: 'Intrusive [r]', tag: '«r» нет в написании',
+    tpl: 'At the junction of a word ending in [{v}] and a word beginning with a vowel, intrusive [r] is used. There is no “r” in spelling. {{Learners are not recommended to use it.}}',
+    ru: 'Те же звуки, но «r» в написании нет: the idea [r] of it. Изучающим язык употреблять не рекомендуется. В «неудобных» сочетаниях linking [r] обычно нет: a roar of laughter, an error of judgement.',
+    items: ['la[w a]nd order|ɔː','Asi[a a]nd Africa|ə','Chin[a a]nd Japan|ə','medi[a a]ttention|ə','dram[a a]nd music|ə','I sa[w i]t|ɔː','dra[w a] line|ɔː','Indi[a a]nd Pakistan|ə','Ann[a a]nd Peter|ə','a sof[a i]n the corner|ə','pizz[a a]nd pasta|ə','Emm[a i]s here|ə','an extr[a e]gg|ə'] },
+
+  // ---- Section IV (на зачёте: только формула, без объяснения)
+  { id: 'r-full', sec: 's4', name: 'Complete devoicing of [r]', tag: '[p, k] + [r] под ударением',
+    tpl: 'In the cluster [{cl}] in a stressed syllable, progressive assimilation affecting the work of the vocal cords takes place: [r] is completely devoiced.',
+    ru: 'После глухих [p, t, k] в ударном слоге сонант [r] полностью (или почти полностью) оглушается.',
+    items: ['[pr]ice|pr','[pr]ize|pr','[pr]oof|pr','[pr]ince|pr','[pr]ivate|pr','[pr]oblem|pr','[pr]oduct|pr','[pr]int|pr','[cr]ab|kr','[cr]ash|kr','[cr]isp|kr','[cr]ime|kr','[cr]ew|kr','[cr]ane|kr','[cr]eature|kr'] },
+  { id: 'r-part', sec: 's4', name: 'Partial devoicing of [r]', tag: 'Без ударения · на стыке · после [s] · после фрикативного',
+    tpl: 'In the cluster [{cl}] {cond}, progressive assimilation affecting the work of the vocal cords takes place: [r] is partially devoiced.',
+    ru: 'Частичное оглушение [r]: в безударном слоге, на стыке слов, когда перед [p, t, k] стоит [s], и после фрикативных (в ударных и безударных слогах).',
+    items: ['s[pr]ay|pr|s','s[pr]int|pr|s','s[cr]atch|kr|s','s[cr]ew|kr|s','[pr]otect|pr|u','[pr]ocedure|pr|u','[pr]oduce|pr|u','mi[cr]ophone|kr|u','em[pr]ess|pr|u','[fr]eeze|fr|f','[fr]esh|fr|f','[fr]idge|fr|f','A[fr]ica|fr|f','[shr]ink|ʃr|f','[shr]imp|ʃr|f','dee[p r]ed|pr|b','kee[p r]unning|pr|b','bla[ck r]ose|kr|b','loo[k r]ound|kr|b'] },
+  { id: 'tr', sec: 's4', name: '[tr] — double assimilation', tag: '3 ассимиляции',
+    tpl: 'In the cluster [tr] double (reciprocal) assimilation takes place: 1) progressive assimilation affecting the work of the vocal cords; 2) regressive assimilation affecting the place of articulation; 3) progressive assimilation affecting the manner of articulation.',
+    ru: 'Под влиянием глухого [t] сонант [r] оглушается; под влиянием [r] альвеолярный [t] становится заальвеолярным; под влиянием шумного [t] сонант [r] становится фрикативным.',
+    items: ['[tr]ip','[tr]y','[tr]avel','[tr]ouble','[tr]uck','[tr]ick','[tr]ust','[tr]eat','[tr]easure','[tr]ack','con[tr]ol'] },
+  { id: 'dr', sec: 's4', name: '[dr] — double assimilation', tag: '2 ассимиляции',
+    tpl: 'In the cluster [dr] double (reciprocal) assimilation takes place: 1) regressive assimilation affecting the place of articulation; 2) progressive assimilation affecting the manner of articulation.',
+    ru: 'Под влиянием [r] альвеолярный [d] становится заальвеолярным; под влиянием шумного [d] сонант [r] становится фрикативным.',
+    items: ['[dr]ink','[dr]ive','[dr]op','[dr]um','[dr]agon','[dr]ift','[dr]ill','[dr]own','chil[dr]en','hun[dr]ed','[dr]ain'] },
+  { id: 'thr', sec: 's4', name: '[θr] — two progressive assimilations', tag: 'Оглушение + одноударное [r]',
+    tpl: 'In the cluster [θr] two progressive assimilations take place: 1) progressive assimilation affecting the work of the vocal cords; 2) progressive assimilation affecting the place and manner of articulation.',
+    ru: 'Под влиянием межзубного [θ] сонант [r] частично оглушается, а также становится одноударным (alveolar tap) и альвеолярным.',
+    items: ['[thr]oat','[thr]ill','[thr]one','[thr]ive','[thr]ust','[thr]ifty','[thr]eshold','heal[th r]isk','the six[th r]ow'] },
+  { id: 'dhr', sec: 's4', name: '[ðr] — progressive assimilation', tag: 'Одноударное [r]',
+    tpl: 'In the cluster [ðr] progressive assimilation affecting the place and manner of articulation takes place.',
+    ru: 'Под влиянием межзубного [ð] сонант [r] становится одноударным (alveolar tap) и альвеолярным.',
+    items: ['wi[th R]obert','wi[th r]oses','wi[th r]espect','smoo[th r]oad','wi[th r]ice','wi[th r]ed pepper','wi[th R]ita'] },
+];
+const R_COND = { u: 'in an unstressed position', b: 'at a word boundary', s: 'when it is preceded by [s]', f: 'when [r] is preceded by a fricative consonant' };
+
+/* ------------------------------ INTONATION ------------------------------- */
+/* Case = one commentable situation. pos: initial / medial / final / whole. */
+const CASES = [
+  // ===== Section I: non-final intonation groups
+  { id: 'ni-lr', sec: 's1', block: 'Non-final groups', tone: 'ˏ', tag: 'Low Rise — «продолжение следует»',
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group{s} {are} pronounced with a Low Rise to show that {they} {are2} incomplete{{ without a continuation}}; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'Обстоятельственные группы, перечисление, начальные придаточные, главные предложения, неполные без продолжения (например, слова автора в косвенной речи). Предъядерная часть высокая (High или Stepping Head).' },
+  { id: 'ni-mhr', sec: 's1', block: 'Non-final groups', tone: 'ˊ', tag: 'Mid-High Rise — симметричные части', mine: true,
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group is pronounced with a Mid-High Rise because the clauses are symmetrical in their grammatical structure and meaning; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'Первая часть сложносочинённого предложения, если соседние части симметричны по структуре и смыслу: Low Rise тогда часто заменяется на Mid-High Rise.' },
+  { id: 'ni-fall', sec: 's1', block: 'Non-final groups', tone: 'ˋ', tag: 'Fall, not-low ending — «весомо»',
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group is pronounced with a not-low ending Fall to add greater semantic weight{{ (it is semantically important but grammatically incomplete)}}; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'Not-low ending: падение не доходит до низа диапазона. Типично для частей, важных по смыслу, но грамматически незаконченных.' },
+  { id: 'ni-fall-low', sec: 's1', block: 'Non-final groups', tone: 'ˎ', tag: 'Fall, low ending — «самостоятельная часть»', mine: true,
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group is pronounced with a Fall to add greater semantic weight; it is structurally independent, so the Fall has a low ending; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'В структурно самостоятельных non-final groups падение обычно доходит до низа диапазона.' },
+  { id: 'ni-fr-contrast', sec: 's1', block: 'Non-final groups', tone: 'ˋ…ˏ', tag: 'Fall-Rise — контраст',
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group is pronounced with {FR} to express contrast{{ to the preceding context{xy}}}; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'Падение даёт выделение, подъём показывает незавершённость и тесную связь с продолжением. Часть противопоставлена тому, что идёт дальше или было раньше. Перед Fall-Rise часто бывает Sliding Head.' },
+  { id: 'ni-fr-emph', sec: 's1', block: 'Non-final groups', tone: 'ˇ', tag: 'Fall-Rise — особый акцент',
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group is pronounced with {FR} to express special emphasis; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'Особая смысловая важность части без противопоставления.' },
+  { id: 'ni-fr-ref', sec: 's1', block: 'Non-final groups', tone: 'ˇ', tag: 'Fall-Rise — отсылка к сказанному',
+    tpl: 'This utterance forms {{a combined tune and consists of }}{N} intonation groups. The non-final intonation group is pronounced with {FR} to express reference to the preceding idea; the final intonation group is pronounced with a Fall to show that the utterance is complete.',
+    note: 'Нет ни контраста, ни особого акцента: слово повторяет мысль из предыдущего контекста, и от повтора она не становится менее важной.' },
+
+  // ===== Section II: parentheses
+  { id: 'par-ini-lr', sec: 's2', block: 'Initial parentheses', pos: 'initial', tone: 'ˏ', tag: 'Initial · Low Rise — «продолжение следует»',
+    tpl: '“{p}” is an initial parenthetical phrase that forms a separate intonation group. It is pronounced with a Low Rise to show that it is incomplete{{ without a continuation}}.',
+    note: 'Самая частая модель: Low Rise после обычного (или высокого) предтакта и высокой шкалы, если она есть.' },
+  { id: 'par-ini-fall', sec: 's2', block: 'Initial parentheses', pos: 'initial', tone: 'ˋ', tag: 'Initial · Fall — «весомо»',
+    tpl: '“{p}” is an initial parenthetical phrase that forms a separate intonation group. It is pronounced with a Fall to sound weighty and to make the whole utterance more important.',
+    note: 'Падение делает вводное слово весомым, а всё высказывание более важным.' },
+  { id: 'par-ini-fr-contrast', sec: 's2', block: 'Initial parentheses', pos: 'initial', tone: 'ˋ…ˏ', tag: 'Initial · Fall-Rise — контраст',
+    tpl: '“{p}” is an initial parenthetical phrase that forms a separate intonation group. It is pronounced with {FR} to express contrast.',
+    note: 'Fall-Rise придаёт вводной фразе контраст.' },
+  { id: 'par-ini-fr-emph', sec: 's2', block: 'Initial parentheses', pos: 'initial', tone: 'ˇ', tag: 'Initial · Fall-Rise — акцент',
+    tpl: '“{p}” is an initial parenthetical phrase that forms a separate intonation group. It is pronounced with {FR} to express additional emphasis.',
+    note: 'Fall-Rise придаёт вводному слову дополнительное выделение.' },
+  { id: 'par-ini-head', sec: 's2', block: 'Initial parentheses', pos: 'initial', tone: 'ˈ', tag: 'Initial · без отдельной группы — head',
+    tpl: '“{p}” is an initial parenthetical phrase that doesn’t form a separate intonation group. It is pronounced as the head of the tune{{ (it has a full stress)}}.',
+    note: 'Тесно связанные вводные (I think, I suppose, I believe, I’m afraid, well, of course, surely, probably…) отдельной группы не образуют. Полное ударение → head.' },
+  { id: 'par-ini-prehead', sec: 's2', block: 'Initial parentheses', pos: 'initial', tone: '·', tag: 'Initial · без отдельной группы — prehead',
+    tpl: '“{p}” is an initial parenthetical phrase that doesn’t form a separate intonation group. It is pronounced as the prehead of the tune{{ (it is unstressed or partially stressed)}}.',
+    note: 'Без ударения или с частичным ударением → prehead.' },
+  { id: 'par-med-lr', sec: 's2', block: 'Medial parentheses', pos: 'medial', tone: 'ˏ', tag: 'Medial · отдельная группа — Low Rise, ниже и быстрее',
+    tpl: '“{p}” is a medial parenthetical phrase that forms a separate intonation group. It is pronounced with a Low Rise to show that it is incomplete{{ without a continuation}}. {{It is pronounced on a lower pitch and at a quicker tempo than the main remark.}}',
+    note: 'Попутная мысль между двумя группами. Звучит ниже и быстрее основной фразы. Похоже на вставки в скобках или между тире.' },
+  { id: 'par-med-tail', sec: 's2', block: 'Medial parentheses', pos: 'medial', tone: 'ˌ', tag: 'Medial · tail',
+    tpl: '“{p}” is a medial parenthetical phrase that doesn’t form a separate intonation group. It is pronounced as the tail of the tune.',
+    note: 'Вводное слово присоединяется к первой группе как хвост.' },
+  { id: 'par-med-nuc', sec: 's2', block: 'Medial parentheses', pos: 'medial', tone: 'ˋ…ˏ', tag: 'Medial · часть ядра Fall-Rise Divided',
+    tpl: '“{p}” is a medial parenthetical phrase that doesn’t form a separate intonation group. It is pronounced as part of the nucleus of the Fall-Rise Divided tune to express contrast.',
+    note: 'Вводное слово присоединяется к первой группе как часть ядра Fall-Rise Divided и несёт подъём.' },
+  { id: 'par-fin-tail', sec: 's2', block: 'Final parentheses', pos: 'final', tone: 'ˌ', tag: 'Final · tail',
+    tpl: '“{p}” is a final parenthetical phrase that doesn’t form a separate intonation group. It is pronounced as the tail of the tune.',
+    note: 'Вводные слова в конце подводят итог или добавляют детали. Это безударные или частично ударные заядерные слоги.' },
+  { id: 'par-fin-nuc', sec: 's2', block: 'Final parentheses', pos: 'final', tone: 'ˋ…ˏ', tag: 'Final · часть ядра Fall-Rise Divided',
+    tpl: '“{p}” is a final parenthetical phrase that doesn’t form a separate intonation group. It is pronounced as part of the nucleus of the Fall-Rise Divided tune to express additional emphasis.',
+    note: 'Дополнительная выделенность: вводная фраза несёт подъём Fall-Rise Divided.' },
+
+  // ===== Section III: reporting phrases
+  { id: 'rep-ini-ml', sec: 's3', block: 'Initial reporting phrases', pos: 'initial', tone: '>', tag: 'Initial · Mid Level — разговор',
+    tpl: '“{p}” is an initial reporting phrase that forms a separate intonation group. It is pronounced with a Mid Level tone to show that it is incomplete{{ without the following Quoted speech}}.{{ This pattern is typical of conversation.}}',
+    note: 'Mid Level: ядерный слог произносится на ровной высоте в середине диапазона и удлиняется. Дальше короткая пауза, а первый ударный слог прямой речи звучит выше ядра слов автора.' },
+  { id: 'rep-ini-lr', sec: 's3', block: 'Initial reporting phrases', pos: 'initial', tone: 'ˏ', tag: 'Initial · Low Rise — чтение вслух',
+    tpl: '“{p}” is an initial reporting phrase that forms a separate intonation group. It is pronounced with a Low Rise to show that it is incomplete{{ without the following Quoted speech}}.{{ This pattern is common in reading aloud.}}',
+    note: 'Деление на две группы и пауза между ними чётче, чем при Mid Level. Так обычно читают вслух.' },
+  { id: 'rep-ini-frd', sec: 's3', block: 'Initial reporting phrases', pos: 'initial', tone: 'ˋ…ˏ', tag: 'Initial · Fall-Rise Divided — контраст',
+    tpl: '“{p}” is an initial reporting phrase that forms a separate intonation group. It is pronounced with a Fall-Rise Divided to express contrast{{ to the preceding context}}.',
+    note: 'Используется вместо Low Rise, если в словах автора есть слово, противопоставленное другому слову в контексте.' },
+  { id: 'rep-ini-fall', sec: 's3', block: 'Initial reporting phrases', pos: 'initial', tone: 'ˋ', tag: 'Initial · Fall — самостоятельная фраза',
+    tpl: '“{p}” is an initial reporting phrase that forms a separate intonation group. It is pronounced with a Fall to sound prominent and to show that the reporting phrase is semantically and grammatically complete.{{ This pattern is used in reading aloud.}}',
+    note: 'Слова автора закончены по смыслу и грамматике и требуют выделения. Бывает при чтении вслух, в разговоре почти нет.' },
+  { id: 'rep-fin-tail', sec: 's3', block: 'Final reporting phrases', pos: 'final', tone: 'ˌ', tag: 'Final · tail',
+    tpl: '“{p}” is a final reporting phrase that doesn’t form a separate intonation group. It is pronounced as the tail of the tune{{ of the Quoted speech}}.{{ {after}}}',
+    note: 'Высота хвоста зависит от ядерного тона прямой речи: после Rise или Fall-Rise он поднимается, после Fall звучит низко.' },
+  { id: 'rep-fin-nuc-contrast', sec: 's3', block: 'Final reporting phrases', pos: 'final', tone: 'ˋ…ˏ', tag: 'Final · часть ядра Fall-Rise Divided — контраст',
+    tpl: '“{p}” is a final reporting phrase that doesn’t form a separate intonation group. It is pronounced as part of the nucleus of the Fall-Rise Divided tune to express contrast{{ to the preceding context}}.',
+    note: 'Важное слово в словах автора несёт подъём Fall-Rise Divided.' },
+  { id: 'rep-fin-nuc-emph', sec: 's3', block: 'Final reporting phrases', pos: 'final', tone: 'ˋ…ˏ', tag: 'Final · часть ядра Fall-Rise Divided — акцент',
+    tpl: '“{p}” is a final reporting phrase that doesn’t form a separate intonation group. It is pronounced as part of the nucleus of the Fall-Rise Divided tune to express additional emphasis.',
+    note: 'Важное слово в словах автора несёт подъём Fall-Rise Divided и выделяется.' },
+  { id: 'rep-fin-long', sec: 's3', block: 'Final reporting phrases', pos: 'final', tone: '|', tag: 'Final · длинная — отдельная группа, ниже',
+    tpl: '“{p}” is a final reporting phrase. It is long, so it forms a separate intonation group. It is pronounced with a {dir}, with the same nuclear tone direction as in the Quoted speech but on a lower pitch.',
+    note: 'Длинные слова автора образуют отдельную группу того же направления, что и прямая речь, но ниже.' },
+  { id: 'rs-lr', sec: 's3', block: 'Reporting phrases in reported speech', pos: 'reported', tone: 'ˏ', tag: 'Reported speech · Low Rise',
+    tpl: '“{p}” is a reporting phrase that forms a separate intonation group. It is pronounced with a Low Rise to show that it is incomplete{{ without the main remark that follows}}.',
+    note: 'В косвенной речи слова автора образуют первую (non-final) группу, главная часть (грамматически преобразованная прямая речь) следующую.' },
+  { id: 'rs-frd', sec: 's3', block: 'Reporting phrases in reported speech', pos: 'reported', tone: 'ˋ…ˏ', tag: 'Reported speech · Fall-Rise Divided — акцент',
+    tpl: '“{p}” is a reporting phrase that forms a separate intonation group. It is pronounced with a Fall-Rise Divided to express additional emphasis.',
+    note: 'Fall-Rise Divided дополнительно выделяет слова автора.' },
+  { id: 'rs-fall', sec: 's3', block: 'Reporting phrases in reported speech', pos: 'reported', tone: 'ˋ', tag: 'Reported speech · Fall — заметно',
+    tpl: '“{p}” is a reporting phrase that forms a separate intonation group. It is pronounced with a Fall to sound prominent.',
+    note: 'Падение делает слова автора заметными.' },
+  { id: 'rs-head', sec: 's3', block: 'Reporting phrases in reported speech', pos: 'reported', tone: 'ˈ', tag: 'Reported speech · без группы — head',
+    tpl: '“{p}” is a reporting phrase that doesn’t form a separate intonation group. It is pronounced as the head of the tune{{ (it has a full stress)}}.',
+    note: 'Отдельной группы нет; первое слово с полным ударением становится head.' },
+  { id: 'rs-prehead', sec: 's3', block: 'Reporting phrases in reported speech', pos: 'reported', tone: '·', tag: 'Reported speech · без группы — prehead',
+    tpl: '“{p}” is a reporting phrase that doesn’t form a separate intonation group. It is pronounced as the prehead of the tune{{ (it is unstressed or partially stressed)}}.',
+    note: 'Отдельной группы нет; безударные или частично ударные слова автора образуют prehead.' },
+
+  // ===== Section IV: direct address
+  { id: 'da-ini-fall', sec: 's4', block: 'Initial direct address', pos: 'initial', tone: 'ˋ', tag: 'Initial · Fall — серьёзно',
+    tpl: '“{p}” is an initial direct address that forms a separate intonation group. It is pronounced with a Fall to show the speaker’s serious attitude{{ to what he or she is going to say}}.{{ This pattern is used at the beginning of a formal speech.}}',
+    note: 'Обращение в начале привлекает внимание. Тон зависит от отношения говорящего, а не от коммуникативного типа предложения. Fall: серьёзное отношение, официальная речь.' },
+  { id: 'da-ini-fr', sec: 's4', block: 'Initial direct address', pos: 'initial', tone: 'ˇ', tag: 'Initial · Fall-Rise — тепло',
+    tpl: '“{p}” is an initial direct address that forms a separate intonation group. It is pronounced with a Fall-Rise to express a warm and friendly attitude.',
+    note: 'В неофициальном разговоре: тёплое, дружеское отношение.' },
+  { id: 'da-ini-fr-warn', sec: 's4', block: 'Initial direct address', pos: 'initial', tone: 'ˇ', tag: 'Initial · Fall-Rise — предупреждение',
+    tpl: '“{p}” is an initial direct address that forms a separate intonation group. It is pronounced with a Fall-Rise to suggest a warning or a wish to single out the person named{{ from a number of others}}.',
+    note: 'Иногда Fall-Rise звучит как предупреждение или выделяет названного человека среди других.' },
+  { id: 'da-ini-lr', sec: 's4', block: 'Initial direct address', pos: 'initial', tone: 'ˏ', tag: 'Initial · Low Rise — неофициальная речь',
+    tpl: '“{p}” is an initial direct address that forms a separate intonation group. It is pronounced with a Low Rise to show that it is incomplete{{ without a continuation}}.{{ This pattern is used at the beginning of an informal speech.}}',
+    note: 'Бывает в начале неофициальной речи.' },
+  { id: 'da-fin-tail', sec: 's4', block: 'Final and medial direct address', pos: 'final', tone: 'ˌ', tag: 'Final · tail',
+    tpl: '“{p}” is a final direct address that doesn’t form a separate intonation group. It is pronounced as the tail of the tune to express {emo}.',
+    note: 'Обращения в конце и в середине не привлекают внимание, а выражают вежливость, привязанность или критику.' },
+  { id: 'da-fin-nuc', sec: 's4', block: 'Final and medial direct address', pos: 'final', tone: 'ˋ…ˏ', tag: 'Final · часть ядра Fall-Rise Divided',
+    tpl: '“{p}” is a final direct address that doesn’t form a separate intonation group. It is pronounced as part of the nucleus of the Fall-Rise Divided tune to sound warmer{{ and to make the address more prominent}}.',
+    note: 'Обращение несёт подъём Fall-Rise Divided: фраза звучит теплее, обращение заметнее.' },
+  { id: 'da-med-tail', sec: 's4', block: 'Final and medial direct address', pos: 'medial', tone: 'ˌ', tag: 'Medial · tail',
+    tpl: '“{p}” is a medial direct address that doesn’t form a separate intonation group. It is pronounced as the tail of the tune to express {emo}.',
+    note: 'Обращение в середине произносится так же, как в конце.' },
+  { id: 'da-med-nuc', sec: 's4', block: 'Final and medial direct address', pos: 'medial', tone: 'ˋ…ˏ', tag: 'Medial · часть ядра Fall-Rise Divided',
+    tpl: '“{p}” is a medial direct address that doesn’t form a separate intonation group. It is pronounced as part of the nucleus of the Fall-Rise Divided tune to sound warmer{{ and to make the address more prominent}}.' },
+];
+
+/* Intonation items. c = case, s = sentence, p = commented phrase, x = context (already marked),
+   h = situation hint for self-marking, tb = from the textbook / commentary sample,
+   cx / cy = contrasted phrases, emo = politeness / affection / criticism, cm = custom comment */
+const INTON = [
+  // ---------- Section I
+  { c: 'ni-lr', s: 'ˈEvery ˏmorning ~ I ˈgo for a ˈrun in the ˋpark.' },
+  { c: 'ni-lr', s: 'If it ˈrains toˏmorrow ~ we’ll ˈstay at ˋhome.' },
+  { c: 'ni-lr', s: 'For ˈbreakfast I ˈusually ·have ˏtoast, ~ ˏeggs ~ and a ˈcup of ˋcoffee.' },
+  { c: 'ni-lr', s: 'ˈAfter the ˏlecture ~ we ˈwent to the ˋlibrary.' },
+  { c: 'ni-lr', s: 'When I ˈcame ˏhome ~ ˈeverybody was ˋsleeping.' },
+  { c: 'ni-lr', s: 'Our ˈflat has a ˏbedroom, ~ a ˏkitchen ~ and a ˈsmall ˋbalcony.' },
+  { c: 'ni-lr', s: 'ˈTom ˏsaid ~ he would ˈcall us ˈafter ˋdinner.' },
+  { c: 'ni-mhr', s: 'ˈAnn ·likes ˊtea ~ and ˈKate ·likes ˋcoffee.' },
+  { c: 'ni-mhr', s: 'ˈPeter ·plays the giˊtar ~ and ˈJane ·plays the piˋano.' },
+  { c: 'ni-mhr', s: 'ˈMy ·room is on the ˈfirst ˊfloor ~ and ˈhis is on the ˋsecond.' },
+  { c: 'ni-fall', s: 'ˈEvery ˋsummer ~ we ˈgo to the ˋseaside.', h: 'Первая часть важна по смыслу, но грамматически не закончена.' },
+  { c: 'ni-fall', s: 'At the ˋweekend ~ I ˈclean the ˈwhole ˋflat.', h: 'Говорящий придаёт первой части больше смыслового веса.' },
+  { c: 'ni-fall', s: 'In ˋJune ~ we ˈhave our ˈfinal eˋxams.', h: 'Первая часть важна по смыслу, но грамматически не закончена.' },
+  { c: 'ni-fall-low', s: 'It was ˈraining ˎhard ~ so we ˈstayed at ˋhome.', h: 'Первая часть — самостоятельное предложение.' },
+  { c: 'ni-fall-low', s: 'The ˈshops ˈclose at ˎsix ~ so we must ˈhurry ˋup.', h: 'Первая часть — самостоятельное предложение.' },
+  { c: 'ni-fall-low', s: 'I ˈdidn’t ˈfeel ˎwell ~ so I ˈstayed in ˋbed.', h: 'Первая часть — самостоятельное предложение.' },
+  { c: 'ni-fr-contrast', x: 'On ˈweekdays I ˈget up at ˋseven.', s: 'On ˋSaturdays and ˏSundays ~ I ˈsleep till ˋten.', cx: 'on Saturdays and Sundays', cy: 'on weekdays' },
+  { c: 'ni-fr-contrast', x: 'In ˈwinter it’s ˈvery ˋcold here.', s: 'But in ˋsummer it is ˏwarm ~ and ˈeverybody ˈgoes to the ˋbeach.', cx: 'in summer', cy: 'in winter' },
+  { c: 'ni-fr-contrast', x: 'In the ˈmorning I ˈhave ˈclasses at the uniˋversity.', s: 'In the ˋevening I ˈwork in a ˏshop ~ to ˈearn some ˋmoney.', cx: 'in the evening', cy: 'in the morning' },
+  { c: 'ni-fr-contrast', x: 'ˈDownstairs there’s a ˈkitchen and a ˋliving-room.', s: 'ˋUpstairs there are ˈthree ˏbedrooms ~ and a ˈsmall ˋbathroom.', cx: 'upstairs', cy: 'downstairs' },
+  { c: 'ni-fr-emph', s: 'ˇSome of my ·friends ~ have ˈnever ˈseen the ˋsea.', h: 'Первая часть выделена особо, без противопоставления.' },
+  { c: 'ni-fr-emph', s: 'ˇNobody ~ ˈknew the ˈanswer to that ˋquestion.', h: 'Первая часть выделена особо, без противопоставления.' },
+  { c: 'ni-fr-emph', s: 'ˇAll of my ·classmates ~ have ˈpassed the eˋxam.', h: 'Первая часть выделена особо, без противопоставления.' },
+  { c: 'ni-fr-ref', x: 'We’ve ˈbought a ˈnew ˋcar.', s: 'The ˇcar ~ was ˈquite exˋpensive.' },
+  { c: 'ni-fr-ref', x: 'Our ˈteacher ˈgave us a ˈlong ˋtest.', s: 'The ˇtest ~ ˈtook ˈtwo ˋhours.' },
+  { c: 'ni-fr-ref', x: 'I ˈmet ˈAnn at the ˋstation.', s: 'ˇAnn ~ was ˈwaiting for her ˋbrother.' },
+
+  // ---------- Section II
+  { c: 'par-ini-lr', s: 'To ˈtell you the ˏtruth, ~ I ˈdon’t ˈlike ˋjazz.', p: 'To tell you the truth' },
+  { c: 'par-ini-lr', s: 'In ˈmy oˏpinion, ~ the ˈfilm was ˈrather ˋboring.', p: 'In my opinion' },
+  { c: 'par-ini-lr', s: 'ˈFirst of ˏall, ~ ˈlet’s ˈcheck the ˋhomework.', p: 'First of all' },
+  { c: 'par-ini-fall', s: 'ˋObviously, ~ we ˈneed ˈmore ˋtime.', p: 'Obviously', h: 'Вводное слово звучит весомо и делает всё высказывание важнее.' },
+  { c: 'par-ini-fall', s: 'Of ˋcourse, ~ I’ll ˈhelp you with ˋpleasure.', p: 'Of course', h: 'Вводная фраза — отдельная группа, звучит весомо.' },
+  { c: 'par-ini-fr-contrast', s: 'ˈAs for ˇme, ~ I ˈprefer ˋtennis.', p: 'As for me', x: 'ˈMost of my ˈfriends ˈlove ˋfootball.' },
+  { c: 'par-ini-fr-contrast', s: 'For ˋmy ˏpart, ~ I’d ˈlike to ˈgo ˋout.', p: 'For my part', x: 'ˈTom ˈwants to ˈstay at ˋhome.' },
+  { c: 'par-ini-fr-contrast', s: 'In ˋmy oˏpinion, ~ they are ˈvery ˋuseful.', p: 'In my opinion', x: 'ˈSome ·people ˈthink eˈxams are ˋuseless.' },
+  { c: 'par-ini-fr-emph', s: 'ˇHonestly, ~ I ˈdon’t ˈknow what to ˋsay.', p: 'Honestly', h: 'Вводное слово выделено особо.' },
+  { c: 'par-ini-fr-emph', s: 'ˇUsually ~ we ˈhave ˈlunch at ˋone.', p: 'Usually', h: 'Вводное слово выделено особо.' },
+  { c: 'par-ini-head', s: 'ˈSurely you ˈknow the ˋanswer.', p: 'Surely', h: 'Вводное слово тесно связано с высказыванием и несёт полное ударение.' },
+  { c: 'par-ini-head', s: 'ˈProbably he’s ˈstill at ˋwork.', p: 'Probably', h: 'Вводное слово тесно связано с высказыванием и несёт полное ударение.' },
+  { c: 'par-ini-head', s: 'ˈCertainly I’ll ˋhelp you.', p: 'Certainly', h: 'Вводное слово тесно связано с высказыванием и несёт полное ударение.' },
+  { c: 'par-ini-prehead', s: 'I’m aˌfraid I ˈcan’t ˋcome.', p: 'I’m afraid', h: 'Вводная фраза тесно связана с высказыванием, без полного ударения.' },
+  { c: 'par-ini-prehead', s: 'I supˌpose you’re ˋright.', p: 'I suppose', h: 'Вводная фраза тесно связана с высказыванием, без полного ударения.' },
+  { c: 'par-ini-prehead', s: 'Oh, ˈwhat a ˋlovely ˌday!', p: 'Oh', h: 'Вводное слово без ударения.' },
+  { c: 'par-med-lr', s: 'The ˈnew ˏteacher, ~ I beˏlieve, ~ is from ˋLondon.', p: 'I believe' },
+  { c: 'par-med-lr', s: 'ˈThis ˏbook, ~ in ˌmy oˏpinion, ~ is ˈmuch ˈbetter than the ˋfilm.', p: 'in my opinion' },
+  { c: 'par-med-lr', s: 'My ˈelder ˏbrother, ~ by the ˏway, ~ ˈworks in a ˋbank.', p: 'by the way' },
+  { c: 'par-med-lr', s: 'The ˈfinal eˏxam, ~ as a ˌmatter of ˏfact, ~ was ˈquite ˋeasy.', p: 'as a matter of fact' },
+  { c: 'par-med-tail', s: 'The ˋmanager, I beˌlieve, ~ is ˈout at the ˋmoment.', p: 'I believe' },
+  { c: 'par-med-tail', s: 'ˈThis ˋroom, of ˌcourse, ~ is the ˈbiggest in the ˋhouse.', p: 'of course' },
+  { c: 'par-med-tail', s: 'The ˋfilm, I ˌthink, ~ was ˈrather ˋlong.', p: 'I think' },
+  { c: 'par-med-nuc', s: 'ˋTom, at ˏleast, ~ ˈdid his ˋhomework.', p: 'at least', h: 'Говорящий противопоставляет Тома другим.' },
+  { c: 'par-med-nuc', s: 'ˋThis ·one, I ˏthink, ~ is ˈmuch ˋbetter.', p: 'I think', h: 'Говорящий противопоставляет этот предмет другим.' },
+  { c: 'par-med-nuc', s: 'ˋMy ·flat, at ˏleast, ~ is ˈwarm in ˋwinter.', p: 'at least', h: 'Говорящий противопоставляет свою квартиру другим.' },
+  { c: 'par-fin-tail', s: 'It’s ˈgoing to ˋrain, I ˌthink.', p: 'I think' },
+  { c: 'par-fin-tail', s: 'It was a ˈvery ˋgood ·film, ˌactually.', p: 'actually' },
+  { c: 'par-fin-tail', s: 'We’ll ˈfinish it toˋmorrow, ˌprobably.', p: 'probably' },
+  { c: 'par-fin-nuc', s: 'They’ll ˈcome on ˋtime, I ˏhope.', p: 'I hope', h: 'Вводная фраза в конце звучит заметнее обычного.' },
+  { c: 'par-fin-nuc', s: 'ˈThat’s the ˋbest ·way, I beˏlieve.', p: 'I believe', h: 'Вводная фраза в конце звучит заметнее обычного.' },
+  { c: 'par-fin-nuc', s: 'It ˈwasn’t ˋyour ·fault, of ˏcourse.', p: 'of course', h: 'Вводная фраза в конце звучит заметнее обычного.' },
+
+  // ---------- Section III
+  { c: 'rep-ini-ml', s: 'ˈTom >said, ~ “ˈLet’s ˈgo to the ˋcinema.”', p: 'Tom said', h: 'Живой разговор.' },
+  { c: 'rep-ini-ml', s: 'My ˈfriend >asked, ~ “ˈWhere are you ˋgoing?”', p: 'My friend asked', h: 'Живой разговор.' },
+  { c: 'rep-ini-ml', s: 'The ˈteacher >said, ~ “ˈOpen your ˋbooks.”', p: 'The teacher said', h: 'Живой разговор.' },
+  { c: 'rep-ini-lr', s: 'ˈJane ˏanswered, ~ “I ˈdon’t ˈknow his adˋdress.”', p: 'Jane answered', h: 'Чтение вслух.' },
+  { c: 'rep-ini-frd', x: 'The ˈboy ˏsaid, ~ “I’m ˈnot ˋhungry.”', s: 'His ˋsister ˏanswered, ~ “ˈI am ˋstarving!”', p: 'His sister answered' },
+  { c: 'rep-ini-frd', x: 'ˈMary ˏsaid, ~ “ˈLet’s ˈtake a ˋtaxi.”', s: 'ˋJohn ˏsaid, ~ “ˈLet’s ˋwalk.”', p: 'John said' },
+  { c: 'rep-ini-fall', s: 'The ˈofficer ˈgave the ˋorder: | “ˈStop the ˋcar!”', p: 'The officer gave the order', h: 'Чтение вслух; авторская фраза закончена по смыслу и грамматике.' },
+  { c: 'rep-ini-fall', s: 'The ˈteacher ˈwrote a ˈsentence on the ˋboard: | “ˈLondon is the ˈcapital of ˋEngland.”', p: 'The teacher wrote a sentence on the board', h: 'Чтение вслух; авторская фраза закончена по смыслу и грамматике.' },
+  { c: 'rep-fin-tail', s: '“ˈShall we ˈgo for a ˏwalk?” asked ·Tom.', p: 'asked Tom' },
+  { c: 'rep-fin-tail', s: '“ˈThat’s a ˈgreat iˋdea,” ˌsaid ˌAnn.', p: 'said Ann' },
+  { c: 'rep-fin-nuc-contrast', x: '“I ˈlove ˋwinter,” said ˌKate.', s: '“I preˈfer ˋsummer,” said ˏJane.', p: 'said Jane' },
+  { c: 'rep-fin-nuc-contrast', x: '“The ˈfilm was ˋboring,” said the ˌboy.', s: '“It was ˈvery ˋgood,” said his ˏsister.', p: 'said his sister' },
+  { c: 'rep-fin-nuc-emph', s: '“ˈEverything will be ˋfine,” she ˌsaid ˏquietly.', p: 'she said quietly', h: 'Авторская фраза в конце выделена особо.' },
+  { c: 'rep-fin-nuc-emph', s: '“ˈThank you for ˋhelping me,” he ˌsaid ˏwarmly.', p: 'he said warmly', h: 'Авторская фраза в конце выделена особо.' },
+  { c: 'rep-fin-long', s: '“ˈWhere is the ˈnearest ˋbank?” | asked a ˈtall ˈman in a ˈgrey ˎcoat.', p: 'asked a tall man in a grey coat' },
+  { c: 'rep-fin-long', s: '“ˈIs it ˈfar from ˏhere?” | asked the ˈold ˈlady with a ˈlarge ˏsuitcase.', p: 'asked the old lady with a large suitcase' },
+  { c: 'rs-lr', s: 'He ˈtold me ˏyesterday ~ that he was ˈleaving for ˋLondon.', p: 'He told me yesterday' },
+  { c: 'rs-lr', s: 'ˈMary ˏsaid ~ that she was ˈvery ˋtired.', p: 'Mary said' },
+  { c: 'rs-lr', s: 'The ˈteacher ˏasked us ~ ˈwhy we were ˋlate.', p: 'The teacher asked us' },
+  { c: 'rs-frd', s: 'He ˋpromised ˏfaithfully ~ that he would ˈnever be ˋlate again.', p: 'He promised faithfully', h: 'Авторская фраза выделена особо.' },
+  { c: 'rs-frd', s: 'She ˋtold me ˏfrankly ~ that she ˈdidn’t ˈlike my ˋplan.', p: 'She told me frankly', h: 'Авторская фраза выделена особо.' },
+  { c: 'rs-fall', s: 'The ˈdoctor inˋsisted ~ that I should ˈstay in ˋbed.', p: 'The doctor insisted', h: 'Авторская фраза должна прозвучать заметно.' },
+  { c: 'rs-fall', s: 'ˈAnn ˋtold us ~ that she was ˈgetting ˋmarried.', p: 'Ann told us', h: 'Авторская фраза должна прозвучать заметно.' },
+  { c: 'rs-head', s: 'She ˈsays she’ll ˈcome ˋlater.', p: 'She says', h: 'Авторская фраза не образует отдельной группы, полное ударение.' },
+  { c: 'rs-head', s: 'ˈTom ·says he’s ˈvery ˋbusy.', p: 'Tom says', h: 'Авторская фраза не образует отдельной группы, полное ударение.' },
+  { c: 'rs-prehead', s: 'She ˌsaid she was ˈvery ˋsorry.', p: 'She said', h: 'Авторская фраза не образует отдельной группы, без полного ударения.' },
+  { c: 'rs-prehead', s: 'He ˌtold me he’d ˈlost his ˋkeys.', p: 'He told me', h: 'Авторская фраза не образует отдельной группы, без полного ударения.' },
+  { c: 'rs-prehead', s: 'They ˌsay it’s ˈgoing to ˋsnow.', p: 'They say', h: 'Авторская фраза не образует отдельной группы, без полного ударения.' },
+
+  // ---------- Section IV
+  { c: 'da-ini-fall', s: 'ˋStudents, ~ the ˈtest ˈstarts in ˈfive ˋminutes.', p: 'Students', h: 'Серьёзное отношение к тому, что будет сказано.' },
+  { c: 'da-ini-fr', s: 'ˇGranny, ~ ˈtell us a ˋstory, ˌplease.', p: 'Granny', h: 'Неофициальный разговор, тёплое отношение.' },
+  { c: 'da-ini-fr-warn', s: 'ˇTom, ~ ˈdon’t ˈtouch the ˋstove!', p: 'Tom', h: 'Предупреждение.' },
+  { c: 'da-ini-fr-warn', s: 'ˇPeter, ~ ˈyou ·stay ˋhere.', p: 'Peter', h: 'Говорящий выделяет одного человека из нескольких.' },
+  { c: 'da-ini-lr', s: 'ˏEverybody, ~ ˈplease ˈtake your ˋseats.', p: 'Everybody', h: 'Начало неофициальной речи.' },
+  { c: 'da-ini-lr', s: 'ˈDear ˏcolleagues, | I’m ˈglad to ˈsee you ˋall here.', p: 'Dear colleagues', h: 'Начало неофициальной речи.' },
+  { c: 'da-ini-lr', s: 'ˏGuys, ~ ˈlet’s ˈstart the ˋmeeting.', p: 'Guys', h: 'Начало неофициальной речи.' },
+  { c: 'da-fin-tail', s: 'ˈStop ˋtalking, ˌBob.', p: 'Bob', emo: 'criticism' },
+  { c: 'da-fin-tail', s: 'You’re ˈlate aˋgain, ˌTom.', p: 'Tom', emo: 'criticism' },
+  { c: 'da-fin-nuc', s: 'ˈThanks a ˋlot, ˏKate.', p: 'Kate', h: 'Тепло, обращение звучит заметно.' },
+  { c: 'da-fin-nuc', s: 'ˈHappy ˋbirthday, ˏGranny.', p: 'Granny', h: 'Тепло, обращение звучит заметно.' },
+  { c: 'da-med-tail', s: 'You’ve ˈbroken the ˋvase, ˌBen, ~ and ˈnow you must ˈtell your ˋmother.', p: 'Ben', emo: 'criticism' },
+  { c: 'da-med-tail', s: 'ˈThat’s ˋwonderful, ˌdarling, ~ but we ˈmust ˈgo ˋnow.', p: 'darling', emo: 'affection' },
+  { c: 'da-med-nuc', s: 'ˈThank you so ˋmuch, ˏMary, ~ for the ˈlovely ˋflowers.', p: 'Mary', h: 'Тепло, обращение звучит заметно.' },
+  { c: 'da-med-nuc', s: 'I ˋthink, ˏdear, ~ we should ˈleave ˋnow.', p: 'dear', h: 'Тепло, обращение звучит заметно.' },
+  { c: 'ni-lr', s: 'Beˈhind the ˏstation ~ there is a ˈlittle ˋpark.' },
+  { c: 'ni-lr', s: 'A ˈcouple of ·weeks aˏgo ~ we ˈvisited our ˈgrandparents in the ˋcountry.' },
+  { c: 'ni-lr', s: 'When ˈPeter ˈlived in ˏLondon ~ he ˈworked in a ˈbig ˋbank.' },
+  { c: 'ni-lr', s: 'My ˈbest ˈfriend ˏsays ~ that she ˈwants to beˈcome a ˋdoctor.' },
+  { c: 'ni-lr', s: 'In the ˈshop I ˈbought ˏapples, ~ ˏpears ~ and a ˈbig ˋmelon.' },
+  { c: 'ni-mhr', s: 'ˈMy ·sister ·lives in ˊMinsk ~ and ˈmy ·brother ·lives in ˋGrodno.' },
+  { c: 'ni-fall', s: 'ˈTwo or ˈthree ·times a ˋmonth ~ we ˈeat ˈout with ˎfriends.' },
+  { c: 'ni-fall', s: 'ˈRight after ˋbreakfast ~ we ˈset ˈoff for the ˋmountains.' },
+  { c: 'ni-fall', s: 'We ˈlive ˈnext to the ˋpark ~ which is ˈreally ˋpleasant.' },
+  { c: 'ni-fall-low', s: 'The ˈlesson ˈstarts at ˎeight ~ so we ˈmustn’t be ˋlate.' },
+  { c: 'ni-fr-contrast', x: 'On the ˈground ˏfloor ~ there is a ˈlarge ˋhall.', s: 'On the ˋfirst ˏfloor ~ there are ˈfour ˋclassrooms.', cx: 'on the first floor', cy: 'on the ground floor' },
+  { c: 'ni-fr-emph', x: 'The ˈchildren are ˈplaying in the ˋyard.', s: 'ˇOne of the ·boys ~ is ˈsitting ˈquietly on a ˋbench.' },
+  { c: 'ni-fr-ref', x: 'My ˈcousin’s ˈname is ˎOlga.', s: 'ˇOlga ~ ˈworks as a ˋlawyer.' },
+  { c: 'par-ini-lr', s: 'ˏNow, ~ ˈlet’s ˈturn to ˈpage ˋten.', p: 'Now' },
+  { c: 'par-ini-lr', s: 'As ˈeverybody ˏknows, ~ ˈsmoking is ˈbad for your ˋhealth.', p: 'As everybody knows' },
+  { c: 'par-ini-lr', s: 'In ˏfact, ~ I’ve ˈnever ˈbeen to ˋLondon.', p: 'In fact' },
+  { c: 'par-ini-lr', s: 'ˏAnyway, ~ ˈlet’s ˈtalk about it toˋmorrow.', p: 'Anyway' },
+  { c: 'par-ini-lr', s: 'ˈAs for ˏme, ~ I ˈusually ˈget up ˋearly.', p: 'As for me' },
+  { c: 'par-ini-fall', s: 'ˋLuckily, ~ the ˈtrain was ˈlate ˋtoo.', p: 'Luckily' },
+  { c: 'par-ini-fall', s: 'ˋSeriously, ~ you ˈneed to ˈtake a ˋbreak.', p: 'Seriously' },
+  { c: 'par-ini-fall', s: 'Unˋfortunately, ~ the ˈmuseum is ˈclosed toˋday.', p: 'Unfortunately' },
+  { c: 'par-ini-fr-contrast', x: 'ˈJane ˈwants to ˈstudy ˋlaw.', s: 'ˈAs for ˋher ˏbrother, ~ he ˈwants to be an ˋartist.', p: 'As for her brother' },
+  { c: 'par-ini-fr-emph', s: 'ˇNormally, ~ the ˈshop ˈopens at ˋnine.', p: 'Normally' },
+  { c: 'par-ini-fr-emph', s: 'ˇFrankly, ~ I ˈdon’t ˈlike his ˋmanner.', p: 'Frankly' },
+  { c: 'par-ini-fr-emph', s: 'ˇIdeally, ~ we should ˈfinish by ˋFriday.', p: 'Ideally' },
+  { c: 'par-ini-head', s: 'Of ˈcourse you can ˋcome.', p: 'Of course' },
+  { c: 'par-ini-head', s: 'I ˈhope you’ll ˈget ˈbetter ˋsoon.', p: 'I hope' },
+  { c: 'par-ini-prehead', s: 'I ˌthink ˈthis is ˈyour ˋbag.', p: 'I think' },
+  { c: 'par-ini-prehead', s: 'Well, ˈlet’s ˈhave a ˋbreak.', p: 'Well' },
+  { c: 'par-med-lr', s: 'Our ˈnew ˏneighbours, ~ as ˌfar as I ˏknow, ~ ˈcame from ˋCanada.', p: 'as far as I know' },
+  { c: 'par-med-tail', s: 'Your ˋparents, I ˌhope, ~ are ˈfeeling ˋwell.', p: 'I hope' },
+  { c: 'par-med-nuc', s: 'ˋThat ˌroute, at ˏleast, ~ is ˈquite ˋsafe.', p: 'at least' },
+  { c: 'par-fin-tail', s: 'ˈWhat do you ·do at ˋweekends, ·usually?', p: 'usually' },
+  { c: 'par-fin-tail', s: 'It was ˈquite exˋpensive, I ˌmust ˌsay.', p: 'I must say' },
+  { c: 'par-fin-tail', s: 'ˈYou can ˈstay with ˏus, of ·course.', p: 'of course' },
+  { c: 'par-fin-nuc', s: 'You’ve ˈbooked the ˋtickets, I ˏhope.', p: 'I hope' },
+  { c: 'par-fin-nuc', s: 'The ˈweather will be ˋfine, I ˏthink.', p: 'I think' },
+  { c: 'rep-ini-ml', s: 'She >asked, ~ “ˈWhat ˈtime is it ˋnow?”', p: 'She asked' },
+  { c: 'rep-ini-ml', s: 'ˈMax >answered: ~ “I’ve ˈjust ˈfinished my ˋhomework.”', p: 'Max answered' },
+  { c: 'rep-ini-ml', s: 'He >said, ~ “It’s ˈtime to ˈgo ˋhome.”', p: 'He said' },
+  { c: 'rep-ini-lr', s: 'ˈKate ˏsaid, ~ “ˈWait for me at the ˋgate.”', p: 'Kate said' },
+  { c: 'rep-ini-lr', s: 'He ˈasked ˏquietly: | “ˈIs it ˏtrue?”', p: 'He asked quietly' },
+  { c: 'rep-ini-lr', s: 'ˈNick exˏplained, ~ “I ˈmissed the ˈlast ˋbus.”', p: 'Nick explained' },
+  { c: 'rep-ini-lr', s: 'The ˈdoctor ˏtold me, | “ˈDrink ˈplenty of ˋwater.”', p: 'The doctor told me' },
+  { c: 'rep-ini-lr', s: 'Her ˈfather reˏminded her, | “ˈDon’t forˈget your ˋkeys.”', p: 'Her father reminded her' },
+  { c: 'rep-ini-frd', x: 'The ˈfirst ·girl ˏsaid: ~ “The ˈbook is ˋdull.”', s: 'The ˋsecond ˌone obˏjected: ~ “ˋNo, ~ it’s ˈreally exˋciting.”', p: 'The second one objected' },
+  { c: 'rep-ini-frd', x: 'ˈTom ˏasked, ~ “ˈWhere’s my ˋphone?”', s: 'His ˋwife ˏanswered ·calmly, ~ “ˈProbably in your ˋcar.”', p: 'His wife answered calmly' },
+  { c: 'rep-ini-fall', s: 'The ˈguide ˈgave us a ˈfinal ˋwarning: | “ˈStay toˋgether.”', p: 'The guide gave us a final warning' },
+  { c: 'rep-fin-tail', s: '“ˈWhere ˋare you?” she ˌasked.', p: 'she asked' },
+  { c: 'rep-fin-tail', s: '“I’m ˈnot ˇsure,” says ·Peter.', p: 'says Peter' },
+  { c: 'rep-fin-tail', s: '“ˈIs it ˏraining?” he ·asks.', p: 'he asks' },
+  { c: 'rep-fin-tail', s: '“If you ˋwant,” said ˌshe.', p: 'said she' },
+  { c: 'rep-fin-nuc-contrast', x: '“I’ve ˈread ˈthree ˋbooks this ˌmonth,” says ˌAnn.', s: '“I’ve ˈread ˋfive,” says ˏMax.', p: 'says Max' },
+  { c: 'rep-fin-nuc-emph', s: '“You’ve ˈdone a ˈgreat ˋjob,” he ˌsaid ˏproudly.', p: 'he said proudly' },
+  { c: 'rep-fin-long', s: '“ˈCan I ˈpay by ˏcard?” | asked a ˈyoung ˈman at the ˏcounter.', p: 'asked a young man at the counter' },
+  { c: 'rs-lr', s: 'My ˈfriend ˏasked me ~ if I could ˈlend him some ˋmoney.', p: 'My friend asked me' },
+  { c: 'rs-frd', s: 'She conˋfessed ˏquietly ~ that she had ˈlost the ˋkey.', p: 'She confessed quietly' },
+  { c: 'rs-fall', s: 'The ˈmanager anˋnounced ~ that the ˈoffice would ˈclose at ˋfour.', p: 'The manager announced' },
+  { c: 'rs-head', s: 'I ˈdoubt if he’ll ˈcome on ˋtime.', p: 'I doubt' },
+  { c: 'rs-prehead', s: 'She ˌsays she ˈloves ˋjazz.', p: 'She says' },
+  { c: 'da-ini-fall', s: 'ˋAndrew, ~ ˈclose the ˋwindow, ˌplease.', p: 'Andrew' },
+  { c: 'da-ini-fall', s: 'ˋSarah, ~ I ˈneed to ˈtalk to you ˈright ˋnow.', p: 'Sarah' },
+  { c: 'da-ini-fall', s: 'ˋBoys, ~ ˈstop ˈrunning in the ˋcorridor.', p: 'Boys' },
+  { c: 'da-ini-fall', s: 'ˋDaniel, ~ ˈhave you ˈfinished the reˏport?', p: 'Daniel' },
+  { c: 'da-ini-fall', s: 'ˈDear ˋguests, | ˈwelcome to our ˋschool.', p: 'Dear guests' },
+  { c: 'da-ini-fr', s: 'ˇDad, ~ ˈcan we ˈgo to the ˏzoo?', p: 'Dad' },
+  { c: 'da-ini-fr', s: 'ˇLucy, ~ ˈwhy are you so ˋsad?', p: 'Lucy' },
+  { c: 'da-ini-fr', s: 'ˇGeorge, ~ ˈcould you ·pass me the ˏsalt?', p: 'George' },
+  { c: 'da-ini-fr', s: 'ˇAuntie, ~ ˈhave you ˈseen my ˏbook?', p: 'Auntie' },
+  { c: 'da-ini-fr-warn', s: 'ˇEmily, | ˈyou ·sit ˈnext to ˋme.', p: 'Emily' },
+  { c: 'da-ini-lr', s: 'ˏNeighbours, | ˈthank you for ˈcoming toˋday.', p: 'Neighbours' },
+  { c: 'da-fin-tail', s: 'ˈSit ˈdown and reˏlax, ·darling.', p: 'darling', emo: 'affection' },
+  { c: 'da-fin-tail', s: 'ˈCould you ˈopen the ˏdoor for me, ·Mr. ·Smith?', p: 'Mr. Smith', emo: 'politeness' },
+  { c: 'da-fin-tail', s: 'ˈThank you ˋvery much, ˌsir.', p: 'sir', emo: 'politeness' },
+  { c: 'da-fin-tail', s: 'ˈWhat’s ˋwrong, ˌsweetheart?', p: 'sweetheart', emo: 'affection' },
+  { c: 'da-fin-nuc', s: 'ˈWell ˋdone, ˏNick.', p: 'Nick' },
+  { c: 'da-fin-nuc', s: 'ˈNice to ˋsee you, ˏEmma.', p: 'Emma' },
+  { c: 'da-med-tail', s: 'Unˈless you ˈhurry ˇup, ·Max, | we’ll ˈmiss the ˎtrain.', p: 'Max', emo: 'criticism' },
+  { c: 'da-med-tail', s: 'I’m ˋsorry, Mrs. ˌGreen, ~ but the ˈdoctor is ˈbusy at the ˎmoment.', p: 'Mrs. Green', emo: 'politeness' },
+  { c: 'da-med-nuc', s: 'You ˋknow, ˏMum, ~ I’ve ˈpassed ˈall my eˋxams.', p: 'Mum' },
+];
+
+/* ------------------------------- REDUCTION ------------------------------- */
+const RED_GROUPS = {
+  1: 'the group of function words which are always weak in an unstressed position',
+  2: 'the group of function words which may be both weak and strong in an unstressed position',
+  3: 'the group of words which are always strong in an unstressed position',
+};
+const RED_TABLES = {
+  1: [['the','ðiː','ði (before a vowel), ðə (before a consonant)'],['a','eɪ','ə'],['an','æn','ən'],['as','æz','əz'],['and','ænd','ən, n'],['but','bʌt','bət'],['than','ðæn','ðən'],['that (conj.)','ðæt','ðət'],['he','hiː','hi·, hi'],['she','ʃiː','ʃi·, ʃi'],['you','juː','ju·, ju'],['me','miː','mi(·)'],['her','hɜː','hɜ·, hə'],['them','ðem','ðəm'],['there','ðeə(r)','ðə(r)'],['us','ʌs','əs']],
+  2: [['at','æt','ət'],['am','æm','əm, m'],['are','ɑː(r)','ɑ·(r), ə(r)'],['be','biː','bi·, bi'],['can','kæn','kən'],['could','kʊd','kəd'],['do','duː','du· (before a vowel), də (before a consonant), d (before j)'],['does','dʌz','dəz'],['have','hæv','həv, əv, v'],['has','hæz','həz, əz, z, s'],['had','hæd','həd, əd, d'],['for','fɔː(r)','fə(r)'],['from','frɒm','frəm'],['of','ɒv','əv'],['must','mʌst','məst, məs'],['shall','ʃæl','ʃəl, ʃl, l'],['should','ʃʊd','ʃəd, ʃd, d'],['some (partitive)','sʌm','səm'],['to','tuː','tu· (before a vowel), tə (before a consonant)'],['was','wɒz','wəz'],['were','wɜː(r)','wə(r)'],['would','wʊd','wəd, d']],
+  3: [['is, are (main verbs)','ɪz, ɑː',''],['do, does (main verbs)','duː, dʌz',''],['have, has, had (main verbs)','hæv, hæz, hæd',''],['when, then (adverbs)','wen, ðen',''],['on, off, in','ɒn, ɒf, ɪn',''],['will (modal verb)','wɪl',''],['that (demonstrative)','ðæt',''],['some (indefinite)','sʌm',''],['shall (modal verb)','ʃæl',''],['when, where (interrogative words, conjunctions)','wen, weə','']],
+};
+/* r: role ("an article"…), g: group, pos: beg / mid / end / grp (end of an accentual-rhythmic group),
+   f: form used, main: used as a main verb, tb: textbook */
+const RED = [
+  // group 1
+  { w: 'the', s: 'ˈPass me **the** ˋsalt, ˌplease.', g: 1, r: 'an article', f: 'ðə' },
+  { w: 'and', s: 'I’d ˈlike ˈbread **and** ˋbutter.', g: 1, r: 'a conjunction', f: 'n' },
+  { w: 'as', s: 'She ˈworks **as** a ˋnurse.', g: 1, r: 'a conjunction', f: 'əz' },
+  { w: 'that', s: 'I ˈknow **that** he’s ˋright.', g: 1, r: 'a conjunction', f: 'ðət' },
+  { w: 'he', s: 'ˈWhat did **he** ˋsay?', g: 1, r: 'a personal pronoun', f: 'hi' },
+  { w: 'she', s: '**She** ˈlives in ˋMinsk.', g: 1, r: 'a personal pronoun', f: 'ʃi' },
+  { w: 'you', s: 'I’ll ˈcall **you** toˋmorrow.', g: 1, r: 'a personal pronoun', f: 'ju' },
+  { w: 'me', s: 'ˈGive **me** a ˋpen, ˌplease.', g: 1, r: 'a personal pronoun', f: 'mi' },
+  { w: 'her', s: 'I ˈsaw **her** ˋyesterday.', g: 1, r: 'a personal pronoun', f: 'hə' },
+  { w: 'there', s: '**There** is a ˈbook on the ˋtable.', g: 1, r: 'a function word (there is / there are)', f: 'ðər' },
+  { w: 'us', s: 'ˈTell **us** a ˋstory.', g: 1, r: 'a personal pronoun', f: 'əs' },
+  // group 2 — weak
+  { w: 'had', s: 'He ˈtold me he **had** ˈstarted ˋschool at ˌsix.', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'həd', dual: 1 },
+  { w: 'at', s: 'We ˈmet **at** the ˋstation.', g: 2, pos: 'mid', r: 'a preposition', f: 'ət' },
+  { w: 'for', s: 'I ˈwaited **for** an ˋhour.', g: 2, pos: 'mid', r: 'a preposition', f: 'fər' },
+  { w: 'from', s: 'He’s **from** ˋLondon.', g: 2, pos: 'mid', r: 'a preposition', f: 'frəm' },
+  { w: 'of', s: 'I’d ˈlike a ˈcup **of** ˋtea.', g: 2, pos: 'mid', r: 'a preposition', f: 'əv' },
+  { w: 'could', s: '**Could** you ˈhelp me with this ˏbag?', g: 2, pos: 'beg', r: 'a modal verb', f: 'kəd' },
+  { w: 'should', s: 'You **should** ˈsee a ˋdoctor.', g: 2, pos: 'mid', r: 'a modal verb', f: 'ʃəd' },
+  { w: 'was', s: 'It **was** ˈvery ˋcold.', g: 2, pos: 'mid', r: 'a link verb', f: 'wəz' },
+  { w: 'some', s: 'ˈWould you ·like **some** ˋtea?', g: 2, pos: 'mid', r: 'a pronoun used in its partitive meaning', f: 'səm' },
+  { w: 'be', s: 'I’d ˈlike to **be** a ˋdoctor.', g: 2, pos: 'mid', r: 'a link verb', f: 'bi' },
+  { w: 'am', s: 'I **am** ˈvery ˋhappy.', g: 2, pos: 'mid', r: 'a link verb', f: 'əm' },
+  // group 2 — strong
+  { w: 'to', s: 'I ˈdon’t ˋwant **to**.', g: 2, pos: 'end', r: 'a particle', f: 'tuː' },
+  { w: 'are', s: 'ˋHere you **are**.', g: 2, pos: 'end', r: 'a link verb', f: 'ɑː' },
+  { w: 'have', s: 'I’ve ˈread ˈmore ˈbooks than ˋyou **have**.', g: 2, pos: 'end', r: 'an auxiliary verb', f: 'hæv' },
+  { w: 'has', s: 'She’s ˈdone ˈmore than ˋhe **has**.', g: 2, pos: 'end', r: 'an auxiliary verb', f: 'hæz' },
+  { w: 'were', s: 'ˋThat’s where they **were**.', g: 2, pos: 'end', r: 'a link verb', f: 'wɜː' },
+  { w: 'could', s: 'I ˈdid as ˋmuch as I **could**.', g: 2, pos: 'end', r: 'a modal verb', f: 'kʊd' },
+  // group 3
+  { w: 'had', s: 'I **had** a ˈvery ˈsoft ˋvoice.', g: 3, main: 1, f: 'hæd', dual: 1 },
+  { w: 'has', s: 'She **has** ˈtwo ˋbrothers.', g: 3, main: 1, f: 'hæz' },
+  { w: 'do', s: 'I ˈusually **do** my ˈhomework in the ˋevening.', g: 3, main: 1, f: 'duː' },
+  { w: 'in', s: 'He ˈworks **in** a ˋbank.', g: 3, r: 'a preposition', f: 'ɪn' },
+  { w: 'off', s: 'He ˈfell **off** his ˋbike.', g: 3, r: 'a preposition', f: 'ɒf' },
+  { w: 'some', s: '**Some** ˈman ˈcalled for you this ˋmorning.', g: 3, r: 'a pronoun used in its indefinite meaning (“a certain”)', f: 'sʌm' },
+  { w: 'where', s: 'I ˈdon’t ˈknow **where** he ˋlives.', g: 3, r: 'a conjunction', f: 'weə' },
+  { w: 'when', s: 'ˈCall me **when** you arˋrive.', g: 3, r: 'a conjunction', f: 'wen' },
+  { w: 'shall', s: 'You **shall** ˈhave it toˋmorrow.', g: 3, r: 'a modal verb (a promise)', f: 'ʃæl' },
+  { w: 'the', s: 'ˈOpen **the** ˋoven, ˌplease.', g: 1, r: 'an article', f: 'ði' },
+  { w: 'a', s: 'She’s ˈgot **a** ˈnew ˋjob.', g: 1, r: 'an article', f: 'ə' },
+  { w: 'an', s: 'We ˈwatched **an** ˈold ˋfilm.', g: 1, r: 'an article', f: 'ən' },
+  { w: 'and', s: 'ˈTom **and** ˈJane are ˋfriends.', g: 1, r: 'a conjunction', f: 'ən' },
+  { w: 'but', s: 'I ˈtried to ˏcall, ~ **but** ˈnobody ˋanswered.', g: 1, r: 'a conjunction', f: 'bət' },
+  { w: 'than', s: 'She’s ˈtaller **than** her ˋsister.', g: 1, r: 'a conjunction', f: 'ðən' },
+  { w: 'them', s: 'I ˈreally ˋlike **them**.', g: 1, r: 'a personal pronoun', f: 'ðəm', note: 'Стоит в конце, но всё равно слабое: 1-я группа.' },
+  { w: 'are', s: 'ˈWhere **are** you ˋgoing?', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'ə' },
+  { w: 'are', s: '**Are** you ˊready?', g: 2, pos: 'beg', r: 'a link verb', f: 'ɑ·' },
+  { w: 'were', s: 'We **were** ˈvery ˋtired.', g: 2, pos: 'mid', r: 'a link verb', f: 'wə' },
+  { w: 'would', s: 'ˈMum **would** ˋlike that.', g: 2, pos: 'mid', r: 'a modal verb', f: 'wəd' },
+  { w: 'shall', s: 'We **shall** ˈsee you toˋmorrow.', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'ʃəl' },
+  { w: 'have', s: '**Have** you ˈfinished your ˏtea?', g: 2, pos: 'beg', r: 'an auxiliary verb', f: 'həv' },
+  { w: 'has', s: '**Has** she ˊphoned?', g: 2, pos: 'beg', r: 'an auxiliary verb', f: 'həz' },
+  { w: 'had', s: 'They **had** ˈleft beˈfore we ˋcame.', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'həd' },
+  { w: 'do', s: 'ˈWhat **do** you ˋthink?', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'də' },
+  { w: 'do', s: '**Do** you ˈplay ˊtennis?', g: 2, pos: 'beg', r: 'an auxiliary verb', f: 'd' },
+  { w: 'does', s: '**Does** she ˈspeak ˊFrench?', g: 2, pos: 'beg', r: 'an auxiliary verb', f: 'dəz' },
+  { w: 'must', s: 'You **must** ˈwork ˋharder.', g: 2, pos: 'mid', r: 'a modal verb', f: 'məs' },
+  { w: 'can', s: '**Can** you ˊswim?', g: 2, pos: 'beg', r: 'a modal verb', f: 'kən' },
+  { w: 'to', s: 'ˈSend it **to** ˋMary.', g: 2, pos: 'mid', r: 'a preposition', f: 'tə' },
+  { w: 'do', s: 'You ˈneed ˈmore ˈsleep than ˋI **do**.', g: 2, pos: 'end', r: 'an auxiliary verb', f: 'duː' },
+  { w: 'from', s: 'ˈWho is the ˋletter **from**?', g: 2, pos: 'end', r: 'a preposition', f: 'frɒm' },
+  { w: 'of', s: 'ˈWhat are you ˋthinking **of**?', g: 2, pos: 'end', r: 'a preposition', f: 'ɒv' },
+  { w: 'at', s: 'ˈWhat are you ˋlooking **at**?', g: 2, pos: 'end', r: 'a preposition', f: 'æt' },
+  { w: 'some', s: 'ˈWould you ˊlike **some**?', g: 2, pos: 'end', r: 'a pronoun used in its partitive meaning', f: 'sʌm' },
+  { w: 'at', s: 'She was ˈlooked **at** by ˋeveryone.', g: 2, pos: 'grp', r: 'a preposition', f: 'æt' },
+  { w: 'does', s: 'She ˈnever **does** the ˋwashing-up.', g: 3, main: 1, f: 'dʌz' },
+  { w: 'have', s: 'They ˈoften **have** ˋguests.', g: 3, main: 1, f: 'hæv' },
+  { w: 'have', s: 'I **have** a ˈvery ˈlarge ˋfamily.', g: 3, main: 1, f: 'hæv' },
+  { w: 'had', s: 'We’ve **had** a ˈwonderful ˋholiday.', g: 3, main: 1, f: 'hæd' },
+  { w: 'that', s: 'ˈGive me **that** ˋbook.', g: 3, r: 'a demonstrative pronoun', f: 'ðæt' },
+  { w: 'when', s: 'I ˈlearned to ˈswim **when** I was ˋsix.', g: 3, r: 'a conjunction', f: 'wen' },
+  { w: 'on', s: 'ˈPut it **on** the ˋshelf.', g: 3, r: 'a preposition', f: 'ɒn' },
+  { w: 'then', s: 'ˏOkay, **then**, ~ ˈsee you ˋlater.', g: 3, r: 'an adverb', f: 'ðen' },
+  { w: 'on', s: 'There’s a ˈspider **on** the ˋceiling.', g: 3, r: 'a preposition', f: 'ɒn' },
+];
+
+/* ------------------------------ THEORY QUIZ ------------------------------ */
+/* [question, correct, [wrong…], explanation?] */
+const QUIZ = {
+  s1: [
+    ['hot dog, old town, pink cake. Какое явление на стыке двух взрывных?', 'Complete loss of plosion', ['Incomplete loss of plosion','Nasal plosion','Fricative plosion'], 'Одинаковое место артикуляции → полная потеря взрыва.'],
+    ['chapter, laptop, hot coffee. Какое явление на стыке двух взрывных?', 'Incomplete loss of plosion', ['Complete loss of plosion','Lateral plosion','Fricative plosion'], 'Разное место артикуляции → неполная потеря взрыва: смычка первого снимается, когда уже началась артикуляция второго.'],
+    ['kitten, good news, get married. Какое явление на стыке согласных?', 'Nasal plosion', ['Lateral plosion','Complete loss of plosion','Fricative plosion']],
+    ['cattle, glass, bad luck. Какое явление на стыке согласных?', 'Lateral plosion', ['Nasal plosion','Incomplete loss of plosion','Fricative plosion']],
+    ['Куда выходит воздух при nasal plosion?', 'через носовую полость', ['по бокам языка','через ротовую полость после размыкания','между губами']],
+    ['Куда выходит воздух при lateral plosion?', 'по бокам языка, опущенным для [l]', ['через носовую полость','над кончиком языка','между зубами']],
+    ['Какие звуки дают nasal plosion?', '[p, t, k, b, d, g] + [m, n]', ['[p, t, k, b, d, g] + [l]','[t, d, n, l, s, z] + [θ, ð]','[p, t, k] + [r]']],
+    ['Высказывание из одной интонационной группы — это…', 'simple tune', ['combined tune','non-final group','compound tune']],
+    ['Что обычно образует non-final groups?', 'начальные придаточные, обстоятельственные группы, группа подлежащего, вводные слова, обращения, слова автора', ['только конечные придаточные','только вопросы','только перечисление']],
+    ['От чего зависит выбор тона в non-final group?', 'от смыслового веса и самостоятельности, которые говорящий придаёт этой части', ['только от пунктуации','от коммуникативного типа предложения','от количества слогов']],
+    ['Low Rise в non-final group показывает, что…', 'высказывание не закончено и без продолжения информация неполная', ['говорящий настроен серьёзно','часть противопоставлена','часть весомая и законченная']],
+    ['Какая предъядерная часть характерна для Low Rise в non-final group?', 'высокая (High или Stepping Head)', ['низкая (Low Head)','Sliding Head','без шкалы']],
+    ['Где типичен Low Rise в non-final group?', 'обстоятельственные группы, перечисление, начальные придаточные, незаконченные по смыслу главные предложения', ['вводные слова в конце','конечные группы утверждений','разделительные вопросы']],
+    ['Когда Low Rise часто заменяется на Mid-High Rise?', 'когда соседние части симметричны по структуре и смыслу', ['при противопоставлении','когда часть весомая','при перечислении']],
+    ['Что делает Fall в non-final group?', 'придаёт части больше смыслового веса', ['показывает незавершённость','выражает теплоту','отсылает к сказанному']],
+    ['Fall с not-low ending типичен для частей…', 'важных по смыслу, но грамматически незаконченных', ['структурно самостоятельных','конечных','вводных в конце']],
+    ['Fall в структурно самостоятельной non-final group обычно…', 'доходит до низа диапазона (low ending)', ['имеет not-low ending','переходит в подъём','заменяется Mid Level']],
+    ['Какие два значения передаёт Fall-Rise в non-final group?', 'особую важность (падение) + незавершённость и тесную связь с продолжением (подъём)', ['серьёзность + завершённость','удивление + сомнение','вежливость + теплоту']],
+    ['Fall-Rise без контраста и без особого акцента выражает…', 'отсылку к предыдущей мысли (reference to the preceding idea)', ['завершённость','предупреждение','формальность']],
+    ['Какая шкала часто стоит перед Fall-Rise в non-final group?', 'Sliding Head', ['Stepping Head','High Head','Low Head']],
+    ['При чтении вслух перед двоеточием или точкой с запятой вероятнее…', 'Fall', ['Low Rise','Fall-Rise','Mid Level'], 'Перед запятой или тире вероятнее Rise или Fall-Rise.'],
+  ],
+  s2: [
+    ['books, maps, hot soup. Какое явление на стыке согласных?', 'Fricative plosion', ['Lateral plosion','Nasal plosion','Loss of plosion']],
+    ['Когда происходит взрыв при fricative plosion?', 'во время произнесения фрикативного согласного', ['до фрикативного согласного','взрыв полностью теряется','через нос']],
+    ['Fricative plosion — результат…', 'тесной коартикуляции соседних согласных', ['огубления','оглушения','выпадения звука']],
+    ['eighth, get there, read the book. Какая ассимиляция на стыке согласных?', 'regressive assimilation affecting the place of articulation', ['progressive assimilation affecting the place of articulation','double assimilation','assimilation affecting the work of the vocal cords']],
+    ['Какие согласные становятся зубными перед [θ, ð]?', '[t, d, n, l, s, z]', ['[p, b, m]','[k, g]','[f, v]']],
+    ['twin, quiz, swan. Какая ассимиляция в сочетаниях [tw, kw, sw]?', 'double (reciprocal): progressive (vocal cords) + regressive (position of lips)', ['только regressive (position of lips)','только progressive (vocal cords)','regressive (place of articulation)']],
+    ['dwarf, penguin. Какая ассимиляция в сочетаниях [dw, gw]?', 'regressive assimilation affecting the position of lips', ['double (reciprocal) assimilation','progressive assimilation affecting the work of the vocal cords','fricative plosion']],
+    ['Какой звук оглушается в [tw, kw, sw]?', '[w]', ['[t, k, s]','оба','никакой']],
+    ['Где оглушение [w] сильнее всего?', 'после [t, k] в ударном слоге', ['в безударном слоге','на стыке слов','после [d, g]']],
+    ['Какие 3 класса вставок разбираются подробно?', 'вводные слова, слова автора, обращения', ['приложения, вставки, вводные слова','вопросы, утверждения, побуждения','хвостики, переспросы, восклицания']],
+    ['Зачем нужны вводные слова в начале?', 'выиграть время или привлечь внимание; показать отношение говорящего', ['подвести итог','выделить одного человека','предупредить']],
+    ['Самая частая модель вводной фразы в начале:', 'Low Rise с обычным (или высоким) предтактом и высокой шкалой', ['High Fall с низкой шкалой','Mid Level','Fall-Rise Divided']],
+    ['Вводное слово в начале с Fall…', 'звучит весомо и делает всё высказывание важнее', ['показывает незавершённость','звучит небрежно','образует хвост']],
+    ['Вводное слово в начале с Fall-Rise…', 'получает дополнительное выделение или выражает контраст', ['показывает неуверенность','бывает только при чтении','звучит весомо']],
+    ['I think, I suppose, I’m afraid без отдельной группы и без полного ударения — это…', 'prehead', ['head','tail','отдельная группа']],
+    ['Of course, surely с полным ударением, без отдельной группы — это…', 'head', ['prehead','tail','nucleus']],
+    ['Вводные слова в конце обычно…', 'не образуют группы и звучат как безударный или частично ударный хвост (tail)', ['образуют группу с Low Rise','произносятся с Fall','несут ядро']],
+    ['Как вводное слово в конце получает дополнительное выделение?', 'становится частью ядра Fall-Rise Divided', ['получает Mid Level','образует группу с Fall','произносится быстрее']],
+    ['Вводное слово в середине в отдельной группе звучит…', 'ниже и быстрее основной фразы', ['выше и медленнее','с High Fall','с Mid Level']],
+    ['Вводное слово в середине может присоединиться к первой группе как…', 'tail или часть ядра', ['head или prehead','отдельная конечная группа','переспрос']],
+  ],
+  s3: [
+    ['Когда появляется linking [r]?', 'слово кончается на [ə, ɪə, eə, ɑː, ɔː, ɜː], следующее начинается с гласного, в написании есть «r» или «re»', ['после любого гласного перед согласным','перед каждым словом с гласного','только внутри слова']],
+    ['Чем intrusive [r] отличается от linking [r]?', 'в написании нет «r»', ['стоит перед согласным','всегда рекомендуется','бывает только после [ɪ]']],
+    ['clear enough, car engine: какой [r] появляется на стыке слов?', 'linking [r]', ['intrusive [r]','[r] нет','одноударный [r]']],
+    ['law and order, Asia and Africa: какой [r] появляется на стыке слов?', 'intrusive [r]', ['linking [r]','[r] нет','заальвеолярный [r]']],
+    ['Что рекомендуется изучающим язык?', 'linking [r] — да; intrusive [r] — не рекомендуется', ['оба','ни один','только intrusive']],
+    ['Где обычно нет linking [r]?', 'в «неудобных» сочетаниях: a roar of laughter, an error of judgement', ['в for a while','в far away','в never again']],
+    ['Где часто встречаются слова автора перед прямой речью?', 'в разговоре', ['только в книгах','только в стихах','нигде']],
+    ['Самый частый тон слов автора перед прямой речью в разговоре:', 'Mid Level', ['Low Rise','High Fall','Fall-Rise']],
+    ['Mid Level — это…', 'ровная высота в середине диапазона, ядерный слог удлинён', ['падение до низа','подъём с низкого до среднего','падение и подъём']],
+    ['Что выделяет прямую речь после слов автора?', 'короткая пауза и более высокий первый ударный слог прямой речи', ['более низкий тон','быстрый темп','Fall-Rise']],
+    ['Самый частый тон слов автора перед прямой речью при чтении вслух:', 'Low Rise', ['Mid Level','High Fall','Fall-Rise Divided']],
+    ['Когда вместо Low Rise на словах автора в начале используется Fall-Rise Divided?', 'когда в них есть слово, противопоставленное другому слову', ['когда фраза длинная','в разговоре','когда цитата — вопрос']],
+    ['Когда на словах автора в начале используется Fall?', 'когда они закончены по смыслу и грамматике и требуют выделения (чтение вслух)', ['когда они не закончены','при контрасте','когда они очень короткие']],
+    ['Слова автора после прямой речи обычно…', 'образуют хвост мелодии прямой речи', ['образуют группу с Fall','образуют head','звучат выше цитаты']],
+    ['После Rise или Fall-Rise слова автора в конце…', 'поднимаются', ['звучат низко','падают','звучат ровно']],
+    ['После Fall слова автора в конце…', 'звучат на низком тоне', ['поднимаются','звучат высоко','образуют отдельную группу']],
+    ['Слова автора в конце как часть ядра Fall-Rise Divided обычно выражают…', 'контраст', ['незавершённость','серьёзность','формальность']],
+    ['Длинные слова автора в конце…', 'образуют отдельную группу того же направления, что и прямая речь, но ниже', ['всегда с High Fall','всегда хвост','с Mid Level']],
+    ['В косвенной речи слова автора обычно…', 'образуют первую (non-final) группу', ['образуют конечную группу','всегда хвост','никогда не ударны']],
+    ['Слова автора в косвенной речи без отдельной группы, первое слово с полным ударением →', 'head', ['prehead','tail','nucleus']],
+  ],
+  s4: [
+    ['price, crab, crime. Что происходит с [r] после глухого взрывного?', 'полное оглушение (progressive assimilation affecting the work of the vocal cords)', ['частичное оглушение','становится заальвеолярным','становится одноударным']],
+    ['Когда [r] оглушается частично?', 'в безударном слоге, на стыке слов, после [s] + [p, t, k], после фрикативного', ['всегда после [p, t, k] в ударном слоге','после звонких','никогда']],
+    ['fresh, shrink, fridge. Что происходит с [r] после фрикативного?', 'частичное оглушение', ['полное оглушение','становится заальвеолярным','без изменений']],
+    ['spray, scratch. Почему [r] здесь оглушается только частично?', 'перед [p, k] стоит [s]', ['слог ударный','[r] в конце','перед ним гласный']],
+    ['Какая ассимиляция в сочетании [tr] (trip, truck)?', 'double: progressive (vocal cords) + regressive (place) + progressive (manner)', ['только progressive (vocal cords)','только regressive (place)','две progressive']],
+    ['Какими становятся [t, d] в [tr, dr]?', 'заальвеолярными (post-alveolar)', ['зубными','межзубными','огубленными']],
+    ['Каким становится [r] в [tr, dr]?', 'фрикативным', ['одноударным','носовым','боковым']],
+    ['Какая ассимиляция в сочетании [dr] (drink, drum)?', 'double: regressive (place) + progressive (manner)', ['две progressive','только progressive (vocal cords)','regressive (lips)']],
+    ['Какая ассимиляция в сочетании [θr] (throat, throne)?', 'две progressive: vocal cords + place and manner', ['double (reciprocal)','только regressive','никакой']],
+    ['Какая ассимиляция в сочетании [ðr] (with roses)?', 'progressive, affecting the place and manner of articulation', ['double (reciprocal)','regressive, affecting the place','progressive, affecting the vocal cords']],
+    ['Одноударный (flapped) [r] — это…', 'один быстрый удар кончика языка об альвеолы', ['раскатистый [r]','фрикативный [r]','оглушённый [r]']],
+    ['Зачем обращение в начале?', 'привлечь внимание; показать, что фраза касается слушающего лично', ['добавить детали','подвести итог','выиграть время']],
+    ['От чего зависит тон обращения в начале?', 'от отношения говорящего к ситуации', ['от коммуникативного типа предложения','от длины имени','только от пунктуации']],
+    ['Fall на обращении в начале показывает…', 'серьёзное отношение (официальная речь)', ['теплоту','незавершённость','критику']],
+    ['Fall-Rise на обращении в начале в неофициальной речи…', 'тёплое, дружеское отношение (иногда предупреждение или выделение человека)', ['серьёзность','официальная речь','критика']],
+    ['Low Rise на обращении в начале типичен для…', 'начала неофициальной речи', ['официальной речи','предупреждения','хвоста']],
+    ['Обращение в конце или в середине…', 'не привлекает внимание; выражает вежливость, привязанность или критику; звучит как хвост', ['всегда отдельная группа','всегда с High Fall','привлекает внимание']],
+    ['Обращение в конце как часть ядра Fall-Rise Divided делает фразу…', 'теплее, а обращение заметнее', ['холоднее и официальнее','незаконченной','критичной']],
+    ['Обращение в середине произносится…', 'так же, как обращение в конце', ['как обращение в начале','всегда с Fall','всегда отдельной группой']],
+  ],
+  red: [
+    ['Какие слова служебные?', 'артикли, предлоги, союзы, личные, притяжательные и неопределённые местоимения, вспомогательные и модальные глаголы', ['существительные и прилагательные','смысловые глаголы и наречия','только числительные']],
+    ['Когда служебные слова бывают ударными?', 'когда нужен особый контраст или выделение', ['всегда в конце','всегда в начале','никогда']],
+    ['На сколько групп делятся служебные слова по произношению в безударной позиции?', 'на три', ['на две','на четыре','на пять']],
+    ['the перед гласным / перед согласным:', '[ði] / [ðə]', ['[ðə] / [ði]','[ðiː] / [ðə]','[ðə] / [ðə]']],
+    ['Когда слова 1-й группы (always weak) звучат в сильной форме?', 'отдельно или при особом выделении', ['в конце фразы','в начале','после паузы']],
+    ['Что входит во 2-ю группу (both weak and strong)?', 'вспомогательные и модальные глаголы, предлоги', ['артикли и союзы','личные местоимения','наречия']],
+    ['Когда слова 2-й группы сильные?', 'в конце фразы или ритмической группы', ['в начале','в середине','всегда']],
+    ['She was ˈlooked at by ˋeveryone. Почему at здесь в сильной форме [æt]?', 'оно стоит в конце ритмической группы', ['оно ударное','это смысловой глагол','оно из 3-й группы']],
+    ['I really like them: какая форма у them в конце фразы и почему?', '[ðəm]: 1-я группа всегда слабая в безударной позиции', ['[ðem]: оно в конце','[ðem]: 3-я группа','[ðəm]: это смысловой глагол']],
+    ['that (союз) и that (указательное):', '1-я группа [ðət] / 3-я группа [ðæt]', ['3-я / 1-я','обе 1-я','обе 2-я']],
+    ['some (partitive) и some (indefinite, «некий»):', '2-я группа / 3-я группа', ['1-я / 3-я','3-я / 2-я','обе 1-я']],
+    ['have, has, had, do, does, is, are как смысловые глаголы:', 'всегда сильные (3-я группа)', ['всегда слабые (1-я)','слабые или сильные (2-я)','зависит от позиции']],
+    ['Какие предлоги всегда сильные?', 'on, off, in', ['at, for, from','of, to','at, of']],
+    ['Слабые формы do:', '[du·] перед гласным, [də] перед согласным, [d] перед [j]', ['[duː] везде','[də] везде','[d] везде']],
+    ['Слабые формы must:', '[məst, məs]', ['[mʌst]','[mʌs]','[mst]']],
+    ['Слабые формы shall:', '[ʃəl, ʃl, l]', ['[ʃæl]','[ʃɒl]','[səl]']],
+  ],
+};
+
+/* Minimal pairs: the same (or almost the same) sentence said two ways. */
+const PAIRS = [
+  { k: 'inton', a: { c: 'ni-lr', s: 'In the ˏmorning ~ I ˈhave a ˋlecture.' }, b: { c: 'ni-fall', s: 'In the ˋmorning ~ I ˈhave a ˋlecture.' } },
+  { k: 'inton', a: { c: 'ni-fr-emph', s: 'ˇMost of my ·friends ~ ˈlive in ˋMinsk.' }, b: { c: 'ni-lr', s: 'ˈMost of my ˏfriends ~ ˈlive in ˋMinsk.' } },
+  { k: 'inton', a: { c: 'par-ini-lr', s: 'ˏWell, ~ ˈlet’s ˈstart the ˋlesson.', p: 'Well' }, b: { c: 'par-ini-fall', s: 'ˋWell, ~ ˈlet’s ˈstart the ˋlesson.', p: 'Well' } },
+  { k: 'inton', a: { c: 'par-ini-head', s: 'I ˈthink you’re ˋright.', p: 'I think' }, b: { c: 'par-ini-prehead', s: 'I ˌthink you’re ˋright.', p: 'I think' } },
+  { k: 'inton', a: { c: 'par-ini-fr-emph', s: 'ˇUsually ~ I ˈwalk to ˋwork.', p: 'Usually' }, b: { c: 'par-ini-lr', s: 'ˏUsually ~ I ˈwalk to ˋwork.', p: 'Usually' } },
+  { k: 'inton', a: { c: 'par-med-lr', s: 'Her ˏbrother, ~ I beˏlieve, ~ is a ˋpilot.', p: 'I believe' }, b: { c: 'par-med-tail', s: 'Her ˋbrother, I beˌlieve, ~ is a ˋpilot.', p: 'I believe' } },
+  { k: 'inton', a: { c: 'par-fin-tail', s: 'We’ll ˈsee them toˋmorrow, I ˌhope.', p: 'I hope' }, b: { c: 'par-fin-nuc', s: 'We’ll ˈsee them toˋmorrow, I ˏhope.', p: 'I hope' } },
+  { k: 'inton', a: { c: 'rep-ini-ml', s: 'ˈJane >said, ~ “ˈLet’s ˋgo.”', p: 'Jane said' }, b: { c: 'rep-ini-lr', s: 'ˈJane ˏsaid, ~ “ˈLet’s ˋgo.”', p: 'Jane said' } },
+  { k: 'inton', a: { c: 'rep-fin-tail', s: '“I ˈlost the ˋgame,” he ˌsaid ˌsadly.', p: 'he said sadly' }, b: { c: 'rep-fin-nuc-emph', s: '“I ˈlost the ˋgame,” he ˌsaid ˏsadly.', p: 'he said sadly' } },
+  { k: 'inton', a: { c: 'rs-head', s: 'She ˈsays it’s ˈtoo ˋlate.', p: 'She says' }, b: { c: 'rs-prehead', s: 'She ˌsays it’s ˈtoo ˋlate.', p: 'She says' } },
+  { k: 'inton', a: { c: 'rs-lr', s: 'The ˈteacher ˏsaid ~ that the ˈtest was ˋcancelled.', p: 'The teacher said' }, b: { c: 'rs-fall', s: 'The ˈteacher ˋsaid ~ that the ˈtest was ˋcancelled.', p: 'The teacher said' } },
+  { k: 'inton', a: { c: 'da-ini-fall', s: 'ˋTom, ~ ˈcome ˋhere.', p: 'Tom' }, b: { c: 'da-ini-fr', s: 'ˇTom, ~ ˈcome ˋhere.', p: 'Tom' } },
+  { k: 'inton', a: { c: 'da-fin-tail', s: 'ˈGood ˋnight, ˌMum.', p: 'Mum', emo: 'affection' }, b: { c: 'da-fin-nuc', s: 'ˈGood ˋnight, ˏMum.', p: 'Mum' } },
+  { k: 'inton', a: { c: 'da-med-tail', s: 'You ˋknow, ˌKate, ~ we ˈneed to ˋtalk.', p: 'Kate', emo: 'criticism' }, b: { c: 'da-med-nuc', s: 'You ˋknow, ˏKate, ~ we ˈneed to ˋtalk.', p: 'Kate' } },
+  { k: 'red', a: { w: 'had', s: 'I **had** ˈfinished my ˋwork.', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'həd', dual: 1 }, b: { w: 'had', s: 'I **had** a ˈlot of ˋwork.', g: 3, main: 1, f: 'hæd' } },
+  { k: 'red', a: { w: 'at', s: 'We ˈmet **at** ˋschool.', g: 2, pos: 'mid', r: 'a preposition', f: 'ət' }, b: { w: 'at', s: 'ˈWho are you ˋwaving **at**?', g: 2, pos: 'end', r: 'a preposition', f: 'æt' } },
+  { k: 'red', a: { w: 'that', s: 'I ˈthink **that** it’s ˋfair.', g: 1, r: 'a conjunction', f: 'ðət' }, b: { w: 'that', s: 'I ˈlike **that** ˋcolour.', g: 3, r: 'a demonstrative pronoun', f: 'ðæt' } },
+  { k: 'red', a: { w: 'some', s: 'ˈBuy **some** ˋbread, ˌplease.', g: 2, pos: 'mid', r: 'a pronoun used in its partitive meaning', f: 'səm' }, b: { w: 'some', s: '**Some** ˈwoman ˈasked about ˋyou.', g: 3, r: 'a pronoun used in its indefinite meaning (“a certain”)', f: 'sʌm' } },
+  { k: 'red', a: { w: 'do', s: 'ˈWhere **do** you ˋlive?', g: 2, pos: 'mid', r: 'an auxiliary verb', f: 'də' }, b: { w: 'do', s: 'I ˈalways **do** the ˋcooking.', g: 3, main: 1, f: 'duː' } },
+];
+const pairSec = pr => pr.k === 'red' ? 'red' : CASE[pr.a.c].sec;
+
+/* ===================== CORE: parsing + comment generation =====================
+   Shared by the page and the document exporter. */
+const MARKS = 'ˈˌ·ˋˎˏˊˇ>';
+const NUC = 'ˋˎˏˊˇ>';
+const toneCat = ch => ('ˋˎ'.includes(ch) ? 'F' : 'ˏˊ'.includes(ch) ? 'R' : ch === 'ˇ' ? 'FR' : ch === '>' ? 'L' : null);
+const CAT_NAME = { F: 'Fall', R: 'Rise', FR: 'Fall-Rise', L: 'Mid Level' };
+const MARK_NAME = { 'ˈ': 'stress (head)', 'ˌ': 'low partial stress', '·': 'partial stress', 'ˋ': 'High Fall', 'ˎ': 'Low Fall', 'ˏ': 'Low Rise', 'ˊ': 'High / Mid-High Rise', 'ˇ': 'Fall-Rise', '>': 'Mid Level' };
+const CASE = Object.fromEntries(CASES.map(c => [c.id, c]));
+const PH = Object.fromEntries(SOUND.map(p => [p.id, p]));
+const SEC = Object.fromEntries(SECTIONS.map(s => [s.id, s]));
+
+function tokenize(s) {
+  return s.split(/\s+/).filter(Boolean).map(raw => {
+    if (raw === '~' || raw === '|') return { b: raw };
+    const bold = raw.includes('**');
+    const clean = raw.replace(/\*\*/g, '');
+    const marks = [];
+    let plain = '';
+    for (const ch of clean) {
+      if (MARKS.includes(ch)) marks.push({ ch, at: plain.length });
+      else plain += ch;
+    }
+    const nuc = marks.find(m => NUC.includes(m.ch));
+    return { raw: clean, plain, marks, bold, nuc: nuc ? nuc.ch : null, main: nuc ? nuc.ch : (marks[0] ? marks[0].ch : null), mainAt: (nuc || marks[0] || { at: null }).at };
+  });
+}
+const words = toks => toks.filter(t => !t.b);
+const norm = w => w.toLowerCase().replace(/[^a-z’'.]/g, '').replace(/[’']/g, "'").replace(/\.$/, '');
+function groupsOf(toks) { const g = [[]]; toks.forEach(t => t.b ? g.push([]) : g[g.length - 1].push(t)); return g.filter(x => x.length); }
+function findPhrase(toks, p) {
+  const ws = words(toks).map(t => norm(t.plain));
+  const ps = p.split(/\s+/).map(norm);
+  for (let i = 0; i + ps.length <= ws.length; i++) if (ps.every((w, k) => ws[i + k] === w)) return [i, i + ps.length - 1];
+  return null;
+}
+/* word index -> group index */
+function wordGroupIndex(toks) { const r = []; let g = 0; toks.forEach(t => { if (t.b) g++; else r.push(g); }); return r; }
+
+function frName(groupToks) {
+  if (groupToks.some(t => t.marks.some(m => m.ch === 'ˇ'))) return 'a Fall-Rise';
+  return 'a Fall-Rise Divided';
+}
+
+/* ------------------------------ comments ------------------------------ */
+function intonComment(it) {
+  const c = CASE[it.c];
+  let t = it.cm || c.tpl;
+  const toks = tokenize(it.s);
+  const gs = groupsOf(toks);
+  const N = gs.length;
+  const numW = ['zero', 'one', 'two', 'three', 'four', 'five'][N] || String(N);
+  const nonFinal = N - 1;
+  const ws = words(toks);
+  const gi = wordGroupIndex(toks);
+  let pr = it.p ? findPhrase(toks, it.p) : null;
+  // group for {FR}: the group containing the phrase, or the first group
+  let frGroup = gs[0];
+  if (pr) frGroup = gs[gi[pr[0]]];
+  // last nucleus before the phrase
+  let before = null;
+  if (pr) for (let i = pr[0] - 1; i >= 0; i--) if (ws[i].nuc) { before = toneCat(ws[i].nuc); break; }
+  const after = before === 'F' ? 'After a Fall it is pronounced on a low pitch.' : before === 'FR' ? 'After a Fall-Rise it is rising.' : before === 'R' ? 'After a Rise it is rising.' : '';
+  const dir = before === 'F' ? 'Fall' : 'Rise';
+  const xy = it.cx ? ` (“${it.cx}” is contrasted to “${it.cy}”)` : '';
+  const pCap = it.p ? it.p.charAt(0).toUpperCase() + it.p.slice(1) : '';
+  t = t.replace('{N}', numW)
+    .replace('{s}', nonFinal > 1 ? 's' : '').replace('{are}', nonFinal > 1 ? 'are' : 'is')
+    .replace('{they}', nonFinal > 1 ? 'they' : 'it').replace('{are2}', nonFinal > 1 ? 'are' : 'is')
+    .replace('{FR}', frName(frGroup)).replace('{xy}', xy).replace('{after}', after).replace('{dir}', dir)
+    .replace('{emo}', it.emo || 'politeness, affection or criticism')
+    .replace(/\{p\}/g, pCap);
+  return t.replace(/\{\{\s*\}\}/g, '').replace(/\{\{\.\s*\}\}/g, '');
+}
+function parseSoundItem(ph, raw) {
+  const [w, cl, cond] = raw.split('|');
+  return { w, cl, cond };
+}
+function soundComment(ph, raw) {
+  const it = parseSoundItem(ph, raw);
+  let t = ph.tpl;
+  if (it.cl) t = t.replace('{cl}', it.cl);
+  if (it.cl && !it.cond && !['r-full'].includes(ph.id)) {
+    const f = it.cl.split(' ');
+    t = t.replace(/\{a\}/g, f[0]).replace(/\{b\}/g, f[1] || '').replace(/\{c\}/g, f[0]).replace(/\{v\}/g, f[0]);
+  }
+  if (ph.id === 'r-link') t = t.replace('{v}', it.cl).replace('{sp}', it.cond === 're' ? '“re”' : '“r”');
+  if (it.cond && ph.id !== 'r-link') {
+    const cond = it.cond === 's' ? `when [${it.cl[0]}] is preceded by [s]` : R_COND[it.cond];
+    t = t.replace('{cond}', cond);
+  }
+  return t;
+}
+const SOUND_FULL = ph => SEC[ph.sec].fullComment;
+function redComment(r) {
+  const q = `“${r.w}”`;
+  if (r.g === 3 && r.main) return `${q} is used as a main verb here{{ (a notional word with its own meaning)}}, so it belongs to ${RED_GROUPS[3]}. It is not reduced{{: [${r.f}]}}.`;
+  if (r.g === 1) return `${q} is ${r.r} that belongs to ${RED_GROUPS[1]}, so it is reduced{{: [${r.f}]}}.`;
+  if (r.g === 3) return `${q} is ${r.r} that belongs to ${RED_GROUPS[3]}, so it is not reduced{{: [${r.f}]}}.`;
+  const lead = r.dual ? `${q} is used as ${r.r} here{{ (a function word)}}, so it belongs to ${RED_GROUPS[2]}.` : `${q} is ${r.r} that belongs to ${RED_GROUPS[2]}.`;
+  const where = { beg: 'at the beginning of the utterance', mid: 'in the middle of the utterance', end: 'at the end of the utterance', grp: 'at the end of an accentual-rhythmic group' }[r.pos];
+  if (r.pos === 'beg' || r.pos === 'mid') return `${lead} It is placed ${where}, so it is reduced{{: [${r.f}]}}.`;
+  return `${lead} It is placed ${where}, so it is not reduced: it retains its strong form{{ [${r.f}]}}.`;
+}
+const RED_OPTS = [
+  { id: 'g1', t: '1-я группа (всегда слабые) → редуцируется', d: 'always weak in an unstressed position' },
+  { id: 'g2w', t: '2-я группа, в начале или середине фразы → редуцируется', d: 'may be both weak and strong' },
+  { id: 'g2s', t: '2-я группа, в конце фразы или ритмической группы → не редуцируется', d: 'may be both weak and strong' },
+  { id: 'g3', t: '3-я группа (всегда сильные) → не редуцируется', d: 'always strong in an unstressed position' },
+];
+const redKey = r => r.g === 1 ? 'g1' : r.g === 3 ? 'g3' : (r.pos === 'beg' || r.pos === 'mid') ? 'g2w' : 'g2s';
+
+/* split "{{optional}}" into segments */
+function segs(str) {
+  const out = []; const re = /\{\{([\s\S]*?)\}\}/g; let last = 0, m;
+  while ((m = re.exec(str))) { if (m.index > last) out.push({ t: str.slice(last, m.index), opt: false }); out.push({ t: m[1], opt: true }); last = re.lastIndex; }
+  if (last < str.length) out.push({ t: str.slice(last), opt: false });
+  return out;
+}
+const plainComment = str => str.replace(/\{\{|\}\}/g, '');
+
+/* ------------------------------ all practice items ------------------------------ */
+function allItems() {
+  const out = [];
+  SOUND.forEach(ph => ph.items.forEach(raw => out.push({ kind: 'sound', sec: ph.sec, ph: ph.id, raw, key: 'S:' + ph.id + ':' + raw })));
+  INTON.forEach((it, i) => out.push({ kind: 'inton', sec: CASE[it.c].sec, it, key: 'I:' + i }));
+  RED.forEach((r, i) => out.push({ kind: 'red', sec: 'red', r, key: 'R:' + i }));
+  return out;
+}
+function commentFor(item) {
+  if (item.kind === 'sound') return soundComment(PH[item.ph], item.raw);
+  if (item.kind === 'inton') return intonComment(item.it);
+  return redComment(item.r);
+}
+if (typeof module !== 'undefined') module.exports = { tokenize, groupsOf, findPhrase, intonComment, soundComment, redComment, redKey, segs, plainComment, allItems, commentFor, CASE, PH, SEC, toneCat, RED_OPTS };
+
+/* ============================ GAMES (v2) ============================ */
+/* ---- comment → chunks ---- */
+const SPLIT_BEFORE = [' that forms', ' that doesn’t form', ' that belongs', ' It is pronounced', ' It is placed', ' It is not reduced', ' It is long,', ' with a ', ' with the same', ' but on a lower', ' as the ', ' as part of', ' to show', ' to express', ' to sound', ' to add', ' to suggest', ' to make', '; the final', ' The non-final', ' because', ' so it is', '; it is structurally', ' so the Fall', ' the phenomenon of', ', there is', ' of the first consonant', ' having ', ' with the nasal', ' with the lateral', ' with the fricative', ' takes place', ' The plosive consonant', ' It is the result', ' Under the influence', '; under the influence', ': a)', ' b)', ': 1)', ' 2)', ' 3)', ', linking', ', intrusive', ' The first word', ' There is no', ' in a stressed', ': [r] is', ' and a word beginning', ', progressive', ' regressive assimilation', ' progressive assimilation', ' double (reciprocal)', ' two progressive', ' which are always', ' which may be both', ', so it belongs', ', so it is'];
+const mustOnly = str => segs(str).filter(s => !s.opt).map(s => s.t).join('').replace(/\s+/g, ' ').replace(/\s+([.,;:])/g, '$1').trim();
+function chunksOf(str) {
+  const t = mustOnly(str);
+  const cuts = new Set();
+  SPLIT_BEFORE.forEach(p => {
+    let i = -1;
+    while ((i = t.indexOf(p, i + 1)) !== -1) { const lead = p.match(/^[;:,]?\s*/)[0].length; if (i + lead > 0) cuts.add(i + lead); }
+  });
+  const pos = [0, ...[...cuts].sort((a, b) => a - b), t.length];
+  let parts = [];
+  for (let i = 0; i < pos.length - 1; i++) { const c = t.slice(pos[i], pos[i + 1]).trim(); if (c) parts.push(c); }
+  // merge very short pieces into the following one
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].replace(/[^A-Za-z]/g, '').length < 9 && i < parts.length - 1) { parts[i + 1] = parts[i] + ' ' + parts[i + 1]; continue; }
+    out.push(parts[i]);
+  }
+  return out;
+}
+/* alternative (wrong) comments for the same item */
+function altComments(item) {
+  const out = [];
+  if (item.kind === 'inton') {
+    const c = CASE[item.it.c];
+    CASES.filter(x => x.sec === c.sec && x.id !== c.id).forEach(x => out.push(intonComment(Object.assign({}, item.it, { c: x.id, cm: undefined }))));
+  } else if (item.kind === 'sound') {
+    SOUND.filter(p => p.sec === item.sec && p.id !== item.ph).forEach(p => { const s = soundComment(p, item.raw); if (!/\{/.test(s)) out.push(s); });
+  } else {
+    const r = item.r;
+    const vars = [{ g: 1 }, { g: 2, pos: 'mid' }, { g: 2, pos: 'beg' }, { g: 2, pos: 'end' }, { g: 3 }, { g: 3, main: 1 }];
+    const same = (a, b) => (['beg', 'mid'].includes(a) && ['beg', 'mid'].includes(b)) || (['end', 'grp'].includes(a) && ['end', 'grp'].includes(b));
+    vars.forEach(v => { if (r.g === 2 && v.g === 2 && same(r.pos, v.pos)) return; const x = Object.assign({}, r, { main: 0, pos: undefined }, v); if (!x.r) x.r = 'a function word'; const s = redComment(x); if (s !== redComment(r)) out.push(s); });
+  }
+  return out;
+}
+
+/* ---- tonogram (melody scheme) ---- */
+function syllables(w) {
+  const s = w.toLowerCase().replace(/[^a-z]/g, '');
+  if (!s) return 0;
+  let n = (s.match(/[aeiouy]+/g) || []).length;
+  if (n > 1 && /[^aeiouy]e$/.test(s) && !/le$/.test(s)) n--;
+  return Math.max(1, n);
+}
+function tonogram(sent) {
+  const toks = tokenize(sent);
+  const TOP = 6, BOT = 42, MID = 24, W = 13;
+  let x = 8; const el = [];
+  let state = 'pre', level = TOP + 2, lastCat = null, tailY = BOT - 2, seenNuc = false;
+  const groupEnds = [];
+  const nucInGroup = [];
+  // is this group final? (for not-low ending)
+  const gs = groupsOf(toks);
+  let gi = 0;
+  const dot = (y, big) => el.push(`<circle cx="${x + 4}" cy="${y}" r="${big ? 2.1 : 1.7}"/>`);
+  const dash = (y, w) => el.push(`<path d="M${x} ${y} L${x + (w || 9)} ${y - 1.2}" class="th"/>`);
+  toks.forEach(t => {
+    if (t.b) {
+      x += 3;
+      el.push(t.b === '|' ? `<path d="M${x} 2 V46" class="bd"/>` : `<path d="M${x} 2 q3 4 0 8 q-3 4 0 8 q3 4 0 8 q-3 4 0 8 q3 4 0 8" class="bd"/>`);
+      x += 7; state = 'pre'; level = TOP + 2; lastCat = null; seenNuc = false; gi++; return;
+    }
+    const n = Math.max(1, syllables(t.plain));
+    const byIdx = {};
+    t.marks.forEach(m => { const before = t.plain.slice(0, m.at).toLowerCase().replace(/[^a-z]/g, ''); let k = (before.match(/[aeiouy]+/g) || []).length; if (m.at > 0 && /[aeiouy]$/.test(before) && k > 0) {} k = Math.min(k, n - 1); byIdx[k] = m.ch; });
+    for (let k = 0; k < n; k++) {
+      const m = byIdx[k];
+      const finalGroup = gi === gs.length - 1;
+      if (m && NUC.includes(m)) {
+        const cat = toneCat(m);
+        if (!seenNuc) {
+          seenNuc = true;
+          if (m === 'ˋ') { const end = finalGroup ? BOT : BOT - 9; el.push(`<path d="M${x} ${Math.min(level + 2, MID - 4)} L${x + 10} ${end}" class="nu"/>`); tailY = end; }
+          else if (m === 'ˎ') { el.push(`<path d="M${x} ${MID + 2} L${x + 10} ${BOT}" class="nu"/>`); tailY = BOT; }
+          else if (m === 'ˏ') { el.push(`<path d="M${x} ${BOT} L${x + 10} ${MID + 3}" class="nu"/>`); tailY = MID + 3; }
+          else if (m === 'ˊ') { el.push(`<path d="M${x} ${MID} L${x + 10} ${TOP + 3}" class="nu"/>`); tailY = TOP + 3; }
+          else if (m === 'ˇ') { el.push(`<path d="M${x} ${TOP + 8} L${x + 8} ${BOT} L${x + 16} ${MID + 2}" class="nu"/>`); x += 6; tailY = MID + 2; }
+          else if (m === '>') { el.push(`<path d="M${x} ${MID} L${x + 12} ${MID}" class="nu"/>`); tailY = MID; x += 2; }
+          lastCat = cat; state = 'tail';
+        } else {
+          // second nuclear mark in a group: the rise of a Fall-Rise Divided
+          el.push(`<path d="M${x} ${BOT} L${x + 10} ${MID + 3}" class="nu"/>`); tailY = MID + 3; lastCat = 'R';
+        }
+        x += W + 2; continue;
+      }
+      if (state === 'tail') {
+        if (lastCat === 'R' || lastCat === 'FR') { tailY = Math.max(TOP + 4, tailY - 3); }
+        if (m === 'ˌ' || m === '·' || m === 'ˈ') dash(tailY, 6); else dot(tailY);
+      } else if (m === 'ˈ') {
+        if (state === 'head') level = Math.min(level + 4, MID - 2);
+        state = 'head'; dash(level);
+      } else if (m === '·' || m === 'ˌ') {
+        if (state === 'pre') dot(BOT - 10, true); else dash(level + 1, 6);
+      } else {
+        if (state === 'pre') dot(BOT - 10); else dot(level + 4);
+      }
+      x += W;
+    }
+    x += 2;
+  });
+  const width = x + 6;
+  return `<svg class="tg" viewBox="0 0 ${width} 48" width="${width}" height="48" role="img" aria-label="Схема мелодии"><path d="M2 ${TOP - 2} H${width - 2} M2 ${BOT + 2} H${width - 2}" class="st"/>${el.join('')}</svg>`;
+}
+const tgBlock = s => `<div class="tgwrap" title="Схема мелодии">${tonogram(s)}</div>`;
+
+/* ---- pick items usable in a game ---- */
+function gameItems(secs, kinds) {
+  return ITEMS.filter(i => secs.includes(i.sec) && (i.sec === 'red' || !kinds || kinds.includes(i.kind)));
+}
+function itemPrompt(it) {
+  if (it.kind === 'sound') return `<p class="sent" style="font-size:clamp(24px,5vw,30px)">${soundHTML(it.raw)}</p>`;
+  if (it.kind === 'red') return `<p class="sent">${markedHTML(it.r.s)}</p>`;
+  return (it.it.x ? `<p class="sent small ctx">— ${markedHTML(it.it.x)}</p>` : '') + `<p class="sent">${it.it.x ? '— ' : ''}${markedHTML(it.it.s, it.it.p)}</p>` + tgBlock(it.it.s);
+}
+const metaLine = (it, extra) => `<div class="qmeta"><span class="kind">${it.kind === 'red' ? 'Редукция' : secLabel(it.sec) + ' · ' + KIND_NAME[it.kind]}</span><span>${extra}</span></div>`;
+
+/* ---- 1. Собери комментарий ---- */
+function buildGame(host, items, opts) {
+  let queue = shuffle(items.slice()), pos = 0, cur, parts, bank, step, mistakes, total = 0, perfect = 0;
+  const limit = opts.limit || 0; const errs = [];
+  function next() {
+    if (limit && total >= limit) return finishGame(host, `${perfect}<small> / ${total} собрано без ошибок</small>`, errs, () => buildGame(host, items, opts), opts.back);
+    if (pos >= queue.length) { queue = shuffle(items.slice()); pos = 0; }
+    cur = queue[pos++]; parts = chunksOf(commentFor(cur)); step = 1; mistakes = 0;
+    const alts = altComments(cur).map(chunksOf);
+    const pool = new Set();
+    alts.forEach(a => a.forEach(c => { if (!parts.includes(c)) pool.add(c); }));
+    const distract = shuffle([...pool]).slice(0, Math.min(4, Math.max(2, Math.round(parts.length / 2))));
+    bank = shuffle(parts.slice(1).concat(distract));
+    host.innerHTML = `<div class="q" style="--c:${COLORS[cur.sec]}">${metaLine(cur, `${limit ? `Задание ${total + 1} из ${limit} · ` : ''}без ошибок ${perfect} из ${total}`)}
+      ${limit ? `<div class="pbar"><i style="width:${total / limit * 100}%"></i></div>` : ''}
+      ${itemPrompt(cur)}
+      <div class="task">Собери комментарий к этому примеру. Первый фрагмент уже стоит. Нажимай остальные фрагменты по порядку. Среди них есть лишние, они в комментарий не входят.</div>
+      <div class="built cmt"></div>
+      <div class="bank"></div>
+      <div class="fb" hidden></div>
+      <div class="btns"><button class="btn primary nx" hidden>Дальше →</button></div></div>`;
+    draw();
+  }
+  function draw() {
+    host.querySelector('.built').innerHTML = parts.slice(0, step).map(c => `<span class="piece in">${esc(c)}</span>`).join(' ') + (step < parts.length ? ' <span class="caret">…</span>' : '');
+    host.querySelector('.bank').innerHTML = bank.map((c, i) => `<button class="piece btn-piece" data-i="${i}">${esc(c)}</button>`).join('');
+  }
+  host.onclick = e => {
+    const b = e.target.closest('.btn-piece');
+    if (b && step < parts.length) {
+      const i = +b.dataset.i, c = bank[i];
+      if (c === parts[step]) { bank.splice(i, 1); step++; draw(); if (step >= parts.length) done(); }
+      else { mistakes++; b.classList.add('shake', 'wrong'); setTimeout(() => b.classList.remove('shake', 'wrong'), 450); }
+      return;
+    }
+    if (e.target.closest('.nx')) next();
+  };
+  function done() {
+    total++; if (!mistakes) perfect++; else errs.push(cur);
+    if (mistakes && !limit) queue.splice(Math.min(pos + 3, queue.length), 0, cur);
+    host.querySelector('.bank').remove();
+    const fb = host.querySelector('.fb'); fb.hidden = false;
+    fb.innerHTML = `<div class="verdict ${mistakes ? 'bad' : 'ok'}">${mistakes ? `Собрано, ошибок: ${mistakes}` : 'Без единой ошибки!'}</div><div><span class="lbl">Полный образец</span> ${LEGEND_INLINE}</div><div class="cmt">${commentHTML(commentFor(cur))}</div>`;
+    const nx = host.querySelector('.nx'); nx.hidden = false; focusIf(nx);
+  }
+  keyHandler = e => { if (e.key === 'Enter' && !host.querySelector('.nx').hidden && e.target.tagName !== 'BUTTON') { e.preventDefault(); next(); } };
+  next();
+}
+
+/* ---- 2. Найди ошибку ---- */
+function errorItem(it) {
+  const parts = chunksOf(commentFor(it));
+  const opts = shuffle(altComments(it).map(chunksOf));
+  for (const a of opts) {
+    if (a.length !== parts.length) continue;
+    const diff = parts.map((c, i) => i).filter(i => i > 0 && a[i] !== parts[i] && !parts.includes(a[i]));
+    if (diff.length === 1) { const i = diff[0]; const shown = parts.slice(); shown[i] = a[i]; return { shown, i, right: parts[i] }; }
+  }
+  // fallback: swap one key term inside a chunk
+  const idx = shuffle(parts.map((c, i) => i).filter(i => i > 0));
+  for (const i of idx) {
+    for (const [x, y] of shuffle(SWAPS.slice())) {
+      const re = new RegExp(x);
+      if (re.test(parts[i])) { const shown = parts.slice(); shown[i] = parts[i].replace(re, y); if (shown[i] !== parts[i]) return { shown, i, right: parts[i] }; }
+    }
+  }
+  return null;
+}
+const SWAPS = [
+  ['\\bregressive\\b', 'progressive'], ['\\bprogressive\\b', 'regressive'],
+  ['\\ba complete loss\\b', 'an incomplete loss'], ['\\ban incomplete loss\\b', 'a complete loss'],
+  ['\\bhaving the same place\\b', 'having different places'], ['\\bhaving different places\\b', 'having the same place'],
+  ['\\bnasal plosion\\b', 'lateral plosion'], ['\\blateral plosion\\b', 'nasal plosion'], ['\\bthe nasal sonorant\\b', 'the lateral sonorant'], ['\\bthe lateral sonorant\\b', 'the nasal sonorant'],
+  ['\\bbecomes devoiced\\b', 'becomes lip-rounded (labialized)'], ['\\bbecomes lip-rounded \\(labialized\\)', 'becomes devoiced'],
+  ['\\bposition of lips\\b', 'place of articulation'], ['\\bplace of articulation\\b', 'manner of articulation'], ['\\bwork of the vocal cords\\b', 'position of lips'],
+  ['\\bbecomes dental\\b', 'becomes post-alveolar'], ['\\bcompletely devoiced\\b', 'partially devoiced'], ['\\bpartially devoiced\\b', 'completely devoiced'],
+  ['\\blinking \\[r\\]', 'intrusive [r]'], ['\\bintrusive \\[r\\]', 'linking [r]'], ['\\bThere is no\\b', 'There is an'],
+  ['\\bin a stressed syllable\\b', 'in an unstressed syllable'], ['\\bin an unstressed position\\b', 'in a stressed position'],
+  ['\\bis reduced\\b', 'is not reduced'], ['\\bis not reduced\\b', 'is reduced'], ['\\bat the beginning\\b', 'at the end'], ['\\bin the middle\\b', 'at the end'], ['\\bat the end of the utterance\\b', 'in the middle of the utterance'],
+  ['\\balways weak\\b', 'always strong'], ['\\balways strong\\b', 'always weak'], ['\\bmay be both weak and strong\\b', 'are always weak'],
+  ['\\ba Low Rise\\b', 'a Fall'], ['\\ba Fall-Rise Divided\\b', 'a Low Rise'], ['\\ba Fall-Rise(?! Divided)', 'a Fall'], ['\\ba Fall(?![-\\w])', 'a Low Rise'], ['\\ba Mid Level tone\\b', 'a High Fall'],
+  ['\\bthe tail\\b', 'the head'], ['\\bthe head\\b', 'the prehead'], ['\\bthe prehead\\b', 'the tail'],
+  ['\\bto express contrast\\b', 'to express additional emphasis'], ['\\bto express additional emphasis\\b', 'to express contrast'], ['\\bto express special emphasis\\b', 'to express reference to the preceding idea'], ['\\breference to the preceding idea\\b', 'special emphasis'],
+  ['\\ban initial\\b', 'a final'], ['\\ba final (?=parenthetical|reporting|direct)', 'a medial '], ['\\ba medial\\b', 'an initial'],
+  ['\\bdoesn’t form\\b', 'forms'], ['\\bforms a separate\\b', 'doesn’t form a separate'],
+  ['\\bserious attitude\\b', 'warm and friendly attitude'], ['\\bwarm and friendly attitude\\b', 'serious attitude'], ['\\blower pitch\\b', 'higher pitch'],
+  ['\\baffection\\b', 'criticism'], ['\\bcriticism\\b', 'politeness'], ['\\bpoliteness\\b', 'affection'],
+  ['\\bit is incomplete\\b', 'it is complete'], ['\\bthey are incomplete\\b', 'they are complete'], ['\\bweighty\\b', 'casual'], ['\\bto sound warmer\\b', 'to sound colder'], ['\\bsymmetrical\\b', 'contrasted'],
+];
+function errorGame(host, items, opts) {
+  const usable = items.filter(it => errorItem(it));
+  if (!usable.length) { host.innerHTML = '<p class="muted">Нет заданий для выбранных настроек.</p>'; return; }
+  let queue = shuffle(usable.slice()), pos = 0, cur, task, total = 0, right = 0, answered;
+  const limit = opts.limit || 0; const errs = [];
+  function next() {
+    if (limit && total >= limit) return finishGame(host, `${right}<small> / ${total} ошибок найдено</small>`, errs, () => errorGame(host, items, opts), opts.back);
+    if (pos >= queue.length) { queue = shuffle(usable.slice()); pos = 0; }
+    cur = queue[pos++]; task = errorItem(cur); answered = false;
+    host.innerHTML = `<div class="q" style="--c:${COLORS[cur.sec]}">${metaLine(cur, `${limit ? `Задание ${total + 1} из ${limit} · ` : ''}найдено ${right} из ${total}`)}
+      ${limit ? `<div class="pbar"><i style="width:${total / limit * 100}%"></i></div>` : ''}
+      ${itemPrompt(cur)}
+      <div class="task">Ниже комментарий к этому примеру. В одном фрагменте допущена ошибка: например, не тот тон, не та позиция или не тот тип ассимиляции. Нажми на фрагмент с ошибкой.</div>
+      <div class="cmt errline">${task.shown.map((c, i) => `<button class="piece btn-piece" data-i="${i}">${esc(c)}</button>`).join(' ')}</div>
+      <div class="fb" hidden></div><div class="btns"><button class="btn primary nx" hidden>Дальше →</button></div></div>`;
+  }
+  host.onclick = e => {
+    const b = e.target.closest('.btn-piece');
+    if (b && !answered) {
+      answered = true; const i = +b.dataset.i, ok = i === task.i;
+      total++; if (ok) right++; else { errs.push(cur); if (!limit) queue.splice(Math.min(pos + 3, queue.length), 0, cur); }
+      host.querySelectorAll('.btn-piece').forEach(x => { x.disabled = true; if (+x.dataset.i === task.i) x.classList.add('wrong'); else if (+x.dataset.i === i) x.classList.add('dim'); });
+      const fb = host.querySelector('.fb'); fb.hidden = false;
+      fb.innerHTML = `<div class="verdict ${ok ? 'ok' : 'bad'}">${ok ? 'Нашли!' : 'Ошибка была в другом месте.'}</div>
+        <div>Неверно: <span class="en bad" style="font-size:16px">${esc(task.shown[task.i])}</span></div>
+        <div>Правильно: <span class="en ok" style="font-size:16px">${esc(task.right)}</span></div>
+        <div><span class="lbl">Полный образец</span></div><div class="cmt">${commentHTML(commentFor(cur))}</div>`;
+      const nx = host.querySelector('.nx'); nx.hidden = false; focusIf(nx); return;
+    }
+    if (e.target.closest('.nx')) next();
+  };
+  keyHandler = e => { if (e.key === 'Enter' && answered && e.target.tagName !== 'BUTTON') { e.preventDefault(); next(); } };
+  next();
+}
+
+/* ---- 3. Пары ---- */
+const pairLabel = (pr, side) => pr.k === 'red' ? RED_OPTS.find(o => o.id === redKey(pr[side])).t : CASE[pr[side].c].tag;
+const pairComment = (pr, side) => pr.k === 'red' ? redComment(pr[side]) : intonComment(pr[side]);
+function pairsGame(host, pairs, opts) {
+  if (!pairs.length) { host.innerHTML = '<p class="muted">Для этой секции пар нет.</p>'; return; }
+  let queue = shuffle(pairs.slice()), pos = 0, cur, options, total = 0, right = 0, answered;
+  const limit = opts.limit || 0; const errs = [];
+  function next() {
+    if (limit && total >= limit) return finishPairs();
+    if (pos >= queue.length) { queue = shuffle(pairs.slice()); pos = 0; }
+    cur = queue[pos++]; answered = false;
+    const A = pairLabel(cur, 'a'), B = pairLabel(cur, 'b');
+    let others;
+    if (cur.k === 'red') others = RED_OPTS.map(o => o.t);
+    else { const c = CASE[cur.a.c]; others = CASES.filter(x => x.sec === c.sec && x.block === c.block).map(x => x.tag); }
+    const set = [[A, B], [B, A]];
+    shuffle(others.slice()).forEach(o => { if (set.length < 4 && o !== A) set.push([o, B]); });
+    shuffle(others.slice()).forEach(o => { if (set.length < 4 && o !== B && !set.some(s => s[0] === A && s[1] === o)) set.push([A, o]); });
+    options = shuffle(set.slice(0, 4));
+    const sentA = cur.k === 'red' ? markedHTML(cur.a.s) : markedHTML(cur.a.s, cur.a.p), sentB = cur.k === 'red' ? markedHTML(cur.b.s) : markedHTML(cur.b.s, cur.b.p);
+    host.innerHTML = `<div class="q" style="--c:${COLORS[pairSec(cur)]}"><div class="qmeta"><span class="kind">${pairSec(cur) === 'red' ? 'Редукция' : secLabel(pairSec(cur))} · пара</span><span>${limit ? `Пара ${total + 1} из ${limit} · ` : ''}верно ${right} из ${total}</span></div>
+      <div class="pair"><div><span class="lbl">A</span><p class="sent">${sentA}</p>${cur.k === 'inton' ? tgBlock(cur.a.s) : ''}</div>
+      <div><span class="lbl">B</span><p class="sent">${sentB}</p>${cur.k === 'inton' ? tgBlock(cur.b.s) : ''}</div></div>
+      <div class="task">A и B — одна и та же фраза, но с разной разметкой${cur.k === 'red' ? '' : ' выделенных слов'}. Выбери строку, где верно названо, что происходит в A и что в B.</div>
+      <div class="opts">${options.map((o, i) => `<button class="opt" data-i="${i}"><kbd>${i + 1}</kbd><span>A: ${esc(o[0])}</span><span class="d" style="color:var(--ink);font-size:14px">B: ${esc(o[1])}</span></button>`).join('')}</div>
+      <div class="fb" hidden></div><div class="btns"><button class="btn primary nx" hidden>Дальше →</button></div></div>`;
+  }
+  function pick(i) {
+    if (answered) return; answered = true;
+    const ok = options[i][0] === pairLabel(cur, 'a') && options[i][1] === pairLabel(cur, 'b');
+    total++; if (ok) right++; else { errs.push(cur); if (!limit) queue.splice(Math.min(pos + 2, queue.length), 0, cur); }
+    host.querySelectorAll('.opt').forEach(b => { b.disabled = true; const o = options[+b.dataset.i]; if (o[0] === pairLabel(cur, 'a') && o[1] === pairLabel(cur, 'b')) b.classList.add('right'); else if (+b.dataset.i === i) b.classList.add('wrong'); else b.classList.add('dim'); });
+    const fb = host.querySelector('.fb'); fb.hidden = false;
+    fb.innerHTML = `<div class="verdict ${ok ? 'ok' : 'bad'}">${ok ? 'Верно!' : 'Не совсем.'}</div>
+      <div><span class="lbl">A</span><div class="cmt">${commentHTML(pairComment(cur, 'a'))}</div></div>
+      <div><span class="lbl">B</span><div class="cmt">${commentHTML(pairComment(cur, 'b'))}</div></div>`;
+    const nx = host.querySelector('.nx'); nx.hidden = false; focusIf(nx);
+  }
+  function finishPairs() {
+    keyHandler = null;
+    host.innerHTML = `<div class="q"><div class="score">${right}<small> / ${total} пар верно</small></div><div class="btns"><button class="btn primary again">Ещё раз</button>${opts.back ? '<button class="btn back">Настройки</button>' : ''}</div>
+      ${errs.length ? `<h3>Разбор</h3><div class="errs">${errs.map(p => `<div class="err"><p class="sent small">A: ${markedHTML(p.a.s, p.a.p)}</p><div class="cmt">${commentHTML(pairComment(p, 'a'))}</div><p class="sent small">B: ${markedHTML(p.b.s, p.b.p)}</p><div class="cmt">${commentHTML(pairComment(p, 'b'))}</div></div>`).join('')}</div>` : ''}</div>`;
+    host.querySelector('.again').onclick = () => pairsGame(host, pairs, opts);
+    if (opts.back) host.querySelector('.back').onclick = opts.back;
+  }
+  host.onclick = e => { const o = e.target.closest('.opt'); if (o && !o.disabled) return pick(+o.dataset.i); if (e.target.closest('.nx')) next(); };
+  keyHandler = e => { if (!answered) { const n = +e.key; if (n >= 1 && n <= options.length) { e.preventDefault(); pick(n - 1); } } else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') { e.preventDefault(); next(); } };
+  next();
+}
+
+/* ---- 4. Блиц ---- */
+const BLITZ_CAT = id =>
+  id.startsWith('ni-') ? ({ 'ni-lr': 'Low Rise', 'ni-mhr': 'Mid-High Rise', 'ni-fall': 'Fall', 'ni-fall-low': 'Fall', 'ni-fr-contrast': 'Fall-Rise', 'ni-fr-emph': 'Fall-Rise', 'ni-fr-ref': 'Fall-Rise' })[id]
+  : id === 'rep-fin-long' ? 'Отдельная группа ниже (длинная фраза)'
+  : /tail$/.test(id) ? 'Tail' : /prehead$/.test(id) ? 'Prehead' : /head$/.test(id) ? 'Head' : /nuc/.test(id) ? 'Часть ядра Fall-Rise Divided'
+  : /-ml$/.test(id) ? 'Отдельная группа · Mid Level' : /-lr$/.test(id) ? 'Отдельная группа · Low Rise' : /fall$/.test(id) ? 'Отдельная группа · Fall' : 'Отдельная группа · Fall-Rise';
+const BLITZ_SETS = {
+  ni: ['Low Rise', 'Mid-High Rise', 'Fall', 'Fall-Rise'],
+  pos: ['Отдельная группа · Low Rise', 'Отдельная группа · Fall', 'Отдельная группа · Fall-Rise', 'Отдельная группа · Mid Level', 'Tail', 'Head', 'Prehead', 'Часть ядра Fall-Rise Divided', 'Отдельная группа ниже (длинная фраза)'],
+};
+function blitzQ(it) {
+  if (it.kind === 'sound') {
+    const names = SOUND.filter(p => p.sec === it.sec).map(p => p.name);
+    const extra = shuffle(SOUND.filter(p => p.sec !== it.sec).map(p => p.name));
+    const opts = shuffle(names.slice()).slice(0, 4); while (opts.length < 4) opts.push(extra.pop());
+    if (!opts.includes(PH[it.ph].name)) opts[0] = PH[it.ph].name;
+    return { html: `<p class="sent" style="font-size:clamp(24px,5vw,30px)">${soundHTML(it.raw)}</p>`, ask: 'Какое явление на стыке согласных, отмеченных дугой?', a: PH[it.ph].name, opts: shuffle(opts) };
+  }
+  if (it.kind === 'red') return { html: `<p class="sent">${markedHTML(it.r.s)}</p>`, ask: `К какой группе относится «${it.r.w}» и редуцируется ли оно?`, a: RED_OPTS.find(o => o.id === redKey(it.r)).t, opts: RED_OPTS.map(o => o.t) };
+  const id = it.it.c, a = BLITZ_CAT(id);
+  const set = id.startsWith('ni-') ? BLITZ_SETS.ni : BLITZ_SETS.pos;
+  const opts = shuffle([a, ...shuffle(set.filter(x => x !== a)).slice(0, 3)]);
+  return { html: `<p class="sent">${markedHTML(it.it.s, it.it.p)}</p>`, ask: it.it.p ? `Как произносится «${it.it.p}»?` : 'Каким тоном произносится первая группа?', a, opts };
+}
+function blitzGame(host, items, opts) {
+  const key = 'blitz.' + (opts.key || 'all');
+  let best = store.get(key, 0);
+  host.innerHTML = `<div class="q" style="--c:var(--accent)"><div class="score">60<small> секунд</small></div>
+    <p>За минуту ответь на как можно больше коротких вопросов: какой тон, какое явление, какая группа редукции. Отвечай как можно быстрее. Верный ответ даёт +1, а серия из 5 верных подряд — ещё +2. Ошибка обнуляет серию.</p>
+    <div class="muted">Рекорд: ${best}</div><div class="btns"><button class="btn primary go">Старт</button>${opts.back ? '<button class="btn back">Настройки</button>' : ''}</div></div>`;
+  host.onclick = e => { if (e.target.closest('.go')) start(); if (e.target.closest('.back')) opts.back(); };
+  function start() {
+    let score = 0, streak = 0, left = 60, q, lock = false, n = 0, ok = 0;
+    const deck = shuffle(items.slice()); let di = 0;
+    host.innerHTML = `<div class="q blitz" style="--c:var(--accent)"><div class="qmeta"><span class="kind">Блиц</span><span class="timer">60 с</span></div>
+      <div class="pbar"><i class="tbar" style="width:100%"></i></div>
+      <div class="qmeta"><span>Счёт: <b class="sc">0</b></span><span>Серия: <b class="st">0</b></span></div><div class="bq"></div></div>`;
+    const tick = setInterval(() => {
+      if (!host.isConnected) { clearInterval(tick); return; }
+      left--; host.querySelector('.timer').textContent = left + ' с'; host.querySelector('.tbar').style.width = (left / 60 * 100) + '%';
+      if (left <= 0) { clearInterval(tick); end(); }
+    }, 1000);
+    function nq() {
+      if (di >= deck.length) { shuffle(deck); di = 0; }
+      const it = deck[di++]; q = blitzQ(it); lock = false;
+      host.querySelector('.bq').innerHTML = `${q.html}<div class="task">${esc(q.ask)}</div><div class="opts">${q.opts.map((o, i) => `<button class="opt" data-i="${i}"><kbd>${i + 1}</kbd><span>${esc(o)}</span></button>`).join('')}</div>`;
+    }
+    function pick(i) {
+      if (lock) return; lock = true; n++;
+      const good = q.opts[i] === q.a;
+      if (good) { ok++; streak++; score += 1 + (streak % 5 === 0 ? 2 : 0); } else streak = 0;
+      host.querySelector('.sc').textContent = score; host.querySelector('.st').textContent = streak;
+      host.querySelectorAll('.bq .opt').forEach(b => { b.disabled = true; if (q.opts[+b.dataset.i] === q.a) b.classList.add('right'); else if (+b.dataset.i === i) b.classList.add('wrong'); });
+      setTimeout(() => { if (left > 0) nq(); }, good ? 350 : 1100);
+    }
+    function end() {
+      keyHandler = null;
+      if (score > best) { best = score; store.set(key, best); }
+      host.innerHTML = `<div class="q"><div class="score">${score}<small> очков</small></div><div class="muted">Верно ${ok} из ${n} · рекорд ${best}</div>
+        <div class="btns"><button class="btn primary go">Ещё раз</button>${opts.back ? '<button class="btn back">Настройки</button>' : ''}</div></div>`;
+    }
+    host.onclick = e => { const o = e.target.closest('.bq .opt'); if (o && !o.disabled) pick(+o.dataset.i); if (e.target.closest('.go')) start(); if (e.target.closest('.back')) opts.back(); };
+    keyHandler = e => { const k = +e.key; if (k >= 1 && k <= (q ? q.opts.length : 0)) { e.preventDefault(); pick(k - 1); } };
+    nq();
+  }
+}
+
+function finishGame(host, scoreHTML, errs, again, back) {
+  keyHandler = null;
+  host.innerHTML = `<div class="q"><div class="score">${scoreHTML}</div><div class="btns"><button class="btn primary again">Ещё раз</button>${back ? '<button class="btn back">Настройки</button>' : ''}</div>
+    ${errs.length ? `<h3>Разбор</h3><div class="errs">${errs.map(it => `<div class="err" style="--c:${COLORS[it.sec]}">${itemPrompt(it)}<div class="cmt">${commentHTML(commentFor(it))}</div></div>`).join('')}</div>` : ''}</div>`;
+  host.querySelector('.again').onclick = again;
+  if (back) host.querySelector('.back').onclick = back;
+}
+
+/* ---- games tab inside a section ---- */
+const GAME_HELP = { build: 'Комментарий разбит на фрагменты. Собери его в правильном порядке.', error: 'В готовом комментарии одна ошибка. Найди её.', pairs: 'Одна фраза в двух вариантах разметки. Определи, чем они различаются.', blitz: 'Минута быстрых вопросов на счёт.' };
+const GAMES = [['build', 'Собери комментарий'], ['error', 'Найди ошибку'], ['pairs', 'Пары'], ['blitz', 'Блиц']];
+function gamesTab(pane, id) {
+  let g = store.get('game.' + id, 'build');
+  function draw() {
+    pane.innerHTML = `<div class="ctrls"><div class="chips">${GAMES.map(([k, t]) => `<button class="chip" data-gm="${k}" aria-pressed="${g === k}">${t}</button>`).join('')}</div></div><p class="block-note">${GAME_HELP[g]}</p><div id="gm"></div>`;
+    const host = pane.querySelector('#gm');
+    const items = gameItems([id]);
+    if (g === 'build') buildGame(host, items, {});
+    else if (g === 'error') errorGame(host, items, {});
+    else if (g === 'pairs') pairsGame(host, PAIRS.filter(p => pairSec(p) === id), {});
+    else blitzGame(host, items, { key: id });
+  }
+  pane.onclick = e => { const c = e.target.closest('[data-gm]'); if (c) { g = c.dataset.gm; store.set('game.' + id, g); keyHandler = null; draw(); } };
+  draw();
+}
+
+/* ---- 5. Зеркало позиций (sections II–IV) ---- */
+const MIRROR_CELLS = {
+  lr: 'Отдельная группа · Low Rise', fall: 'Отдельная группа · Fall', fr: 'Отдельная группа · Fall-Rise', ml: 'Отдельная группа · Mid Level',
+  low: 'Отдельная группа · ниже и быстрее', long: 'Длинная: отдельная группа, ниже', head: 'Head', pre: 'Prehead', tail: 'Tail', nuc: 'Часть ядра Fall-Rise Divided',
+};
+const MIRROR = [
+  { sec: 's2', row: 'Вводные слова', cells: [['lr', 'fall', 'fr', 'head', 'pre'], ['low', 'tail', 'nuc'], ['tail', 'nuc']] },
+  { sec: 's3', row: 'Слова автора (прямая речь)', cells: [['ml', 'lr', 'fr', 'fall'], [], ['tail', 'nuc', 'long']] },
+  { sec: 's3', row: 'Слова автора (косвенная речь)', cells: [['lr', 'fr', 'fall', 'head', 'pre'], [], []] },
+  { sec: 's4', row: 'Обращения', cells: [['fall', 'fr', 'lr'], ['tail', 'nuc'], ['tail', 'nuc']] },
+];
+function mirrorHTML(cur) {
+  const chip = k => `<span class="mc mc-${k}">${esc(MIRROR_CELLS[k])}</span>`;
+  return `<div class="panel" style="margin-top:16px"><h3>Зеркало позиций</h3><p class="block-note">Одинаковый цвет — одинаковая модель. В середине и в конце у всех трёх видов вставок почти одно и то же: tail или часть ядра Fall-Rise Divided.</p>
+    <div style="overflow-x:auto"><table class="mirror"><thead><tr><th></th><th>В начале</th><th>В середине</th><th>В конце</th></tr></thead><tbody>
+    ${MIRROR.map(r => `<tr class="${r.sec === cur ? 'cur' : ''}"><th>${esc(r.row)}</th>${r.cells.map(c => `<td>${c.length ? c.map(chip).join('') : '<span class="muted">—</span>'}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+/* =============================== UI =============================== */
+const app = document.getElementById('app');
+const COLORS = { s1: 'var(--c-s1)', s2: 'var(--c-s2)', s3: 'var(--c-s3)', s4: 'var(--c-s4)', red: 'var(--c-red)', exam: 'var(--c-exam)' };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = { get(k, d) { try { const v = localStorage.getItem('phon.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('phon.' + k, JSON.stringify(v)); } catch (e) {} } };
+const canFocus = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+const focusIf = el => { if (canFocus && el) el.focus({ preventScroll: true }); };
+const ITEMS = allItems();
+const WAVE = '<svg class="wave" viewBox="0 0 8 20" aria-label="boundary"><path d="M4 0 q3 2.5 0 5 q-3 2.5 0 5 q3 2.5 0 5 q-3 2.5 0 5"/></svg>';
+const BAR = '<span class="bar" aria-label="boundary"></span>';
+const bndHTML = b => b === '|' ? BAR : WAVE;
+
+/* ---------- rendering English ---------- */
+function markedHTML(s, phrase) {
+  const toks = tokenize(s);
+  const pr = phrase ? findPhrase(toks, phrase) : null;
+  let wi = -1;
+  return toks.map(t => {
+    if (t.b) return bndHTML(t.b);
+    wi++;
+    let h = '';
+    for (const ch of t.raw) h += MARKS.includes(ch) ? `<span class="mk">${esc(ch)}</span>` : esc(ch);
+    const bold = t.bold || (pr && wi >= pr[0] && wi <= pr[1]);
+    return bold ? `<b>${h}</b>` : h;
+  }).join(' ').replace(/<\/b> <b>/g, ' ');
+}
+function soundHTML(raw) {
+  const w = raw.split('|')[0];
+  return esc(w).replace(/\[([^\]]+)\]/g, '<span class="j">$1</span>');
+}
+function commentHTML(str) {
+  return segs(str).map(s => s.opt ? `<span class="o">${esc(s.t)}</span>` : esc(s.t)).join('');
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ['home', 's1', 's2', 's3', 's4', 'red', 'exam'];
+let keyHandler = null;
+document.addEventListener('keydown', e => { if (keyHandler && !e.metaKey && !e.ctrlKey && !e.altKey) keyHandler(e); });
+function go(v) { if (location.hash.slice(1) !== v) location.hash = v === 'home' ? '' : v; else route(); }
+function route() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
+  keyHandler = null;
+  if (v === 'home') renderHome();
+  else if (v === 'exam') renderExam();
+  else renderSection(v);
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+
+function header(crumb) {
+  return `<header class="top"><div class="crumbs">${crumb ? `<button data-go="home">← Все разделы</button>` : ''}</div>
+  <h1>Фонетический тренажёр</h1>
+  ${crumb ? '' : '<p class="muted" style="margin:0">Звуковые явления и интонация секций I–IV, редукция служебных слов. Учим теорию и тренируем комментарии как на зачёте.</p>'}</header>`;
+}
+app.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+
+/* ---------- home ---------- */
+const MARK_LEGEND = [['ˈ', 'статический тон (полное ударение)'], ['·', 'частичное высокое ударение'], ['ˌ', 'частичное низкое ударение'], ['ˋ', 'High Fall'], ['ˎ', 'Low Fall'], ['ˏ', 'Low Rise'], ['ˊ', 'High / Mid-High Rise'], ['ˇ', 'Fall-Rise'], ['ˋ…ˏ', 'Fall-Rise Divided'], ['>', 'Mid Level'], [WAVE, 'граница групп'], [BAR, 'граница с паузой']];
+function renderHome() {
+  const count = sec => ITEMS.filter(i => i.sec === sec).length;
+  const cards = SECTIONS.map(s => `<button class="card" data-go="${s.id}" style="--c:${COLORS[s.id]}">
+      <span class="num">${s.num}</span><span class="ttl">${esc(s.inton)}</span><span class="sub">${esc(s.sound)}</span>
+      <span class="cnt">${count(s.id)} примеров · ${QUIZ[s.id].length} вопросов по теории</span></button>`).join('')
+    + `<button class="card" data-go="red" style="--c:${COLORS.red}"><span class="num">R</span><span class="ttl">Редукция служебных слов</span><span class="sub">Always weak · both weak and strong · always strong</span><span class="cnt">${count('red')} примеров · ${QUIZ.red.length} вопросов</span></button>
+      <button class="card" data-go="exam" style="--c:${COLORS.exam}"><span class="num">∑</span><span class="ttl">Перед экзаменом: всё вперемешку</span><span class="sub">Выбери секции и тип заданий. В конце будет разбор ошибок.</span><span class="cnt">${ITEMS.length} примеров всего</span></button>`;
+  app.innerHTML = header(false) + `<div class="cards">${cards}</div>
+    <div class="panel"><h3>Знаки разметки</h3><div class="legend">${MARK_LEGEND.map(([g, t]) => `<span><b>${g.startsWith('<') ? g : esc(g)}</b>${esc(t)}</span>`).join('')}</div></div>`;
+}
+
+/* ---------- section page ---------- */
+const BLOCK_NOTES = {
+  'Non-final groups': 'Высказывание из одной интонационной группы — simple tune, из нескольких — combined tune. Группы делятся на final и non-final. Non-final обычно образуют начальные придаточные, обстоятельственные группы, группа подлежащего, вводные слова, обращения, слова автора. Выбор тона зависит от смыслового веса и самостоятельности части. При чтении вслух перед «:» и «;» вероятнее Fall, перед «,» и «—» Rise или Fall-Rise.',
+  'Initial parentheses': 'Вводные слова в начале нужны, чтобы выиграть время или привлечь внимание (well, as you know) либо показать отношение говорящего (unfortunately, personally). Часто образуют отдельную группу, тон выбирается по смысловой важности.',
+  'Medial parentheses': 'Вводная мысль посередине. В отдельной группе звучит ниже и быстрее основной фразы, а может присоединиться к первой группе как tail или часть ядра.',
+  'Final parentheses': 'Подводят итог или добавляют детали. Обычно не образуют группы и звучат как безударный или частично ударный хвост.',
+  'Initial reporting phrases': 'Начальные авторские слова часто встречаются в разговоре, средние и конечные в основном в книгах. Обычно образуют отдельную группу.',
+  'Final reporting phrases': 'Обычно хвост мелодии прямой речи: после Rise или Fall-Rise поднимается, после Fall звучит низко.',
+  'Reporting phrases in reported speech': 'Авторские слова образуют первую (non-final) группу, а главная часть (преобразованная прямая речь) следующую. Если отдельной группы нет: полное ударение даёт head, иначе prehead.',
+  'Initial direct address': 'Обращение в начале привлекает внимание. Это отдельная группа, тон зависит от отношения говорящего, а не от типа предложения.',
+  'Final and medial direct address': 'Не привлекает внимание, а выражает вежливость, привязанность или критику. Безударный или частично ударный хвост. Medial address произносится так же, как final.',
+};
+const REASON_NOTE = { 's1': 'Для секции I на зачёте достаточно формулы (столбцы 1–2). Объяснение ниже нужно для понимания.', 's2': 'Для секции II на зачёте говорим формулу вместе с объяснением.', 's3': 'Для секции III на зачёте говорим формулу вместе с объяснением.', 's4': 'Для секции IV на зачёте достаточно формулы (столбцы 1–2). Объяснение ниже нужно для понимания.' };
+
+function renderSection(id) {
+  const isRed = id === 'red';
+  const s = isRed ? { id: 'red', num: 'R', title: 'Редукция служебных слов', sound: '', inton: 'Reduction of function words' } : SEC[id];
+  const tab = store.get('tab.' + id, 'theory');
+  app.innerHTML = header(true) + `<div class="sechead" style="--c:${COLORS[id]}"><span class="num">${isRed ? 'Редукция' : 'Section ' + s.num}</span>
+      <h2 style="margin:0">${esc(isRed ? 'Reduction of function words' : s.inton)}</h2>${isRed ? '' : `<span class="muted">${esc(s.sound)}</span>`}</div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="theory">Теория</button>
+      <button class="tab" role="tab" data-tab="quiz">Тест по теории</button>
+      <button class="tab" role="tab" data-tab="practice">Коммен&shy;тарии</button>
+      <button class="tab" role="tab" data-tab="games">Игры</button></nav>
+    <section id="pane"></section>`;
+  const pane = app.querySelector('#pane');
+  const show = t => {
+    store.set('tab.' + id, t); keyHandler = null;
+    app.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+    if (t === 'theory') isRed ? theoryRed(pane) : theorySection(pane, id);
+    else if (t === 'quiz') quizRunner(pane, QUIZ[id].map(q => ({ q, sec: id })), {});
+    else if (t === 'games') gamesTab(pane, id);
+    else practiceSetup(pane, id);
+  };
+  app.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) show(b.dataset.tab); });
+  show(tab);
+}
+
+const LEGEND_MUST = `<div class="legend-line"><span class="must">Обычный текст: сказать обязательно</span><span class="lg-opt">серый текст: можно добавить</span></div>`;
+function theorySection(pane, id) {
+  const phs = SOUND.filter(p => p.sec === id);
+  const cases = CASES.filter(c => c.sec === id);
+  let h = `<div style="--c:${COLORS[id]}">` + LEGEND_MUST + `<h2>Звуковые явления</h2><p class="block-note">${REASON_NOTE[id]}</p>`;
+  h += phs.map(ph => {
+    const ex = ph.items[0];
+    return `<div class="panel ph"><header><h3>${esc(ph.name)}</h3><span class="chip-s">${esc(ph.tag)}</span></header>
+      <div class="muted" style="font-size:13px">Пример комментария: <span class="en" style="font-size:17px;color:var(--ink)">${soundHTML(ex)}</span></div>
+      <div class="cmt">${commentHTML(soundComment(ph, ex))}</div>
+      ${ph.ru ? `<div class="expl">${esc(ph.ru)}</div>` : ''}
+      <div class="exs">${ph.items.slice(0, 8).map(r => `<span>${soundHTML(r)}</span>`).join('')}</div></div>`;
+  }).join('');
+  h += `<h2 style="margin-top:26px">Интонация</h2>`;
+  const blocks = [...new Set(cases.map(c => c.block))];
+  h += blocks.map(b => `<div class="panel"><div class="block-title" style="margin-top:0"><h3>${esc(b)}</h3></div>
+      <p class="block-note">${esc(BLOCK_NOTES[b] || '')}</p>
+      ${cases.filter(c => c.block === b).map(c => {
+        const ex = INTON.find(it => it.c === c.id && it.tb) || INTON.find(it => it.c === c.id);
+        return `<div class="case"><div class="glyph">${esc(c.tone)}</div><div class="body">
+          <span class="tag">${esc(c.tag)}${c.mine ? '<span class="mine">дополнение по учебнику</span>' : ''}</span>
+          ${c.note ? `<span class="note">${esc(c.note)}</span>` : ''}
+          ${ex.x ? `<p class="sent small ctx">${markedHTML(ex.x)}</p>` : ''}
+          <p class="sent small">${markedHTML(ex.s, ex.p)}</p>${tgBlock(ex.s)}
+          <div class="cmt">${commentHTML(intonComment(ex))}</div></div></div>`;
+      }).join('')}</div>`).join('');
+  if (id !== 's1') h += mirrorHTML(id);
+  pane.innerHTML = h + '</div>';
+}
+function theoryRed(pane) {
+  const tbl = g => `<div style="overflow-x:auto"><table class="en" style="border-collapse:collapse;width:100%;font-size:15.5px">
+      <thead><tr>${['слово', 'сильная форма', g === 3 ? '' : 'слабая форма'].filter(Boolean).map(t => `<th style="text-align:left;font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:600;padding:4px 8px;border-bottom:1px solid var(--line)">${t}</th>`).join('')}</tr></thead>
+      <tbody>${RED_TABLES[g].map(r => `<tr>${r.slice(0, g === 3 ? 2 : 3).map((c, i) => `<td style="padding:4px 8px;border-bottom:1px solid var(--line)">${i ? '[' + esc(c) + ']' : esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const ex = (g, pos) => RED.find(r => r.g === g && (pos ? (pos === 'w' ? ['beg', 'mid'].includes(r.pos) : ['end', 'grp'].includes(r.pos)) : true));
+  const exMain = RED.find(r => r.main && r.dual), exAux = RED.find(r => r.dual && r.g === 2);
+  const exBlock = r => `<p class="sent small">${markedHTML(r.s)}</p><div class="cmt">${commentHTML(redComment(r))}</div>`;
+  pane.innerHTML = `<div style="--c:${COLORS.red}">${LEGEND_MUST}
+    <div class="panel"><h3>Как рассуждать</h3><ol style="margin:8px 0 0;padding-left:20px;display:grid;gap:4px">
+      <li>Это служебное слово или смысловое? Have, has, had, do, does, is, are в роли смыслового глагола всегда сильные.</li>
+      <li>К какой из трёх групп оно относится?</li>
+      <li>Для 2-й группы: где стоит слово? Начало или середина → редуцируется; конец фразы или ритмической группы → сильная форма.</li></ol>
+      <p class="block-note" style="margin-top:10px">Служебные слова: артикли, предлоги, союзы, личные, притяжательные и неопределённые местоимения, вспомогательные и модальные глаголы. Они безударны, если не нужен особый контраст или выделение. В безударной позиции они делятся на три группы.</p></div>
+    <div class="panel"><h3>1 · Всегда слабые в безударной позиции <span class="muted" style="font-weight:400">(always weak)</span></h3><p class="block-note">Сильная форма только в изоляции или при особом выделении. Даже в конце фразы слово остаётся слабым.</p>${tbl(1)}${exBlock(ex(1))}</div>
+    <div class="panel"><h3>2 · Могут быть и слабыми, и сильными <span class="muted" style="font-weight:400">(both weak and strong)</span></h3><p class="block-note">Вспомогательные и модальные глаголы, предлоги. Редуцируются в начале и в середине; сохраняют сильную форму в конце фразы или ритмической группы.</p>${tbl(2)}${exBlock(ex(2, 'w'))}${exBlock(ex(2, 's'))}${exBlock(RED.find(r => r.pos === 'grp'))}</div>
+    <div class="panel"><h3>3 · Всегда сильные в безударной позиции <span class="muted" style="font-weight:400">(always strong)</span></h3><p class="block-note">Кроме служебных слов, сюда входят некоторые смысловые слова, которые обычно безударны.</p>${tbl(3)}${exBlock(ex(3))}</div>
+    <div class="panel"><h3>Одно слово, две роли</h3><p class="block-note">had, have, do, does: вспомогательный глагол → группа 2; смысловой → группа 3. that: союз → группа 1, указательное → группа 3. some: partitive → группа 2, indefinite («некий») → группа 3.</p>${exBlock(exAux)}${exBlock(exMain)}</div></div>`;
+}
+
+/* ---------- theory quiz runner ---------- */
+function quizRunner(host, qs, opts) {
+  let queue = shuffle(qs.slice()), pos = 0, cur, answered = 0, right = 0, done = false, order;
+  const limit = opts.limit || 0;
+  const errs = [];
+  function next() {
+    if (limit && answered >= limit) return finish();
+    if (pos >= queue.length) { queue = shuffle(qs.slice()); pos = 0; }
+    cur = queue[pos++]; done = false;
+    const [q, a, w, e] = cur.q;
+    order = shuffle([a, ...w]);
+    const sec = cur.sec;
+    host.innerHTML = `<div class="q" style="--c:${COLORS[sec]}">
+      <div class="qmeta"><span class="kind">${sec === 'red' ? 'Редукция' : 'Section ' + SEC[sec].num} · теория</span><span>${limit ? `Вопрос ${answered + 1} из ${limit} · ` : ''}верно ${right} из ${answered}</span></div>
+      ${limit ? `<div class="pbar"><i style="width:${answered / limit * 100}%"></i></div>` : ''}
+      <div class="task" style="font-size:16px">${esc(q)}</div>
+      <div class="opts">${order.map((o, i) => `<button class="opt" data-i="${i}"><kbd>${i + 1}</kbd><span class="en" style="font-size:16px">${esc(o)}</span></button>`).join('')}</div>
+      <div class="fb" hidden></div>
+      <div class="btns"><button class="btn primary nx" hidden>Дальше →</button></div></div>`;
+  }
+  function pick(i) {
+    if (done) return; done = true;
+    const [q, a, w, e] = cur.q; const ok = order[i] === a;
+    answered++; if (ok) right++; else { errs.push(cur); if (!limit) queue.splice(Math.min(pos + 3, queue.length), 0, cur); }
+    host.querySelectorAll('.opt').forEach(b => { b.disabled = true; const t = order[+b.dataset.i]; if (t === a) b.classList.add('right'); else if (+b.dataset.i === i) b.classList.add('wrong'); else b.classList.add('dim'); });
+    const fb = host.querySelector('.fb'); fb.hidden = false;
+    fb.innerHTML = `<div class="verdict ${ok ? 'ok' : 'bad'}">${ok ? 'Верно!' : 'Не совсем.'}</div>${e ? `<div>${esc(e)}</div>` : ''}`;
+    const nx = host.querySelector('.nx'); nx.hidden = false; nx.textContent = limit && answered >= limit ? 'Результат →' : 'Дальше →'; focusIf(nx);
+  }
+  function finish() {
+    keyHandler = null;
+    host.innerHTML = `<div class="q"><div class="score">${right}<small> / ${answered} верно</small></div>
+      ${errs.length ? `<h3>Ошибки</h3><div class="errs">${errs.map(x => `<div class="err"><div>${esc(x.q[0])}</div><div class="en ok" style="font-size:16px">${esc(x.q[1])}</div></div>`).join('')}</div>` : '<p>Без ошибок!</p>'}
+      <div class="btns"><button class="btn primary again">Ещё раз</button>${opts.back ? '<button class="btn back">Настройки</button>' : ''}</div></div>`;
+    host.querySelector('.again').onclick = () => quizRunner(host, qs, opts);
+    if (opts.back) host.querySelector('.back').onclick = opts.back;
+  }
+  host.onclick = e => { const o = e.target.closest('.opt'); if (o && !o.disabled) return pick(+o.dataset.i); if (e.target.closest('.nx')) next(); };
+  keyHandler = e => { if (!done) { const n = +e.key; if (n >= 1 && n <= order.length) { e.preventDefault(); pick(n - 1); } } else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') { e.preventDefault(); next(); } };
+  next();
+}
+
+/* ---------- practice setup (section) ---------- */
+function practiceSetup(pane, id) {
+  const isRed = id === 'red';
+  let filter = store.get('filter.' + id, 'all');
+  function draw() {
+    pane.innerHTML = `<p class="block-note">По примеру определи явление (шаг 1), потом скажи комментарий вслух и сравни с образцом (шаг 2).</p><div class="ctrls">
+      ${isRed ? '' : `<div class="chips" role="group" aria-label="Тип заданий">${[['all', 'Всё'], ['sound', 'Звуковые явления'], ['inton', 'Интонация']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${filter === k}">${t}</button>`).join('')}</div>`}
+</div><div id="run"></div>`;
+    const items = ITEMS.filter(i => i.sec === id && (filter === 'all' || i.kind === filter));
+    runner(pane.querySelector('#run'), items, { self: false, retry: true });
+  }
+  pane.onclick = e => { const c = e.target.closest('[data-f]'); if (c) { filter = c.dataset.f; store.set('filter.' + id, filter); draw(); } };
+  draw();
+}
+
+/* ---------- options for the identification step ---------- */
+function optionsFor(item) {
+  if (item.kind === 'sound') {
+    return SOUND.filter(p => p.sec === item.sec).map(p => ({ id: p.id, t: p.name, d: p.tag }));
+  }
+  if (item.kind === 'red') return RED_OPTS.map(o => ({ id: o.id, t: o.t, d: o.d }));
+  const c = CASE[item.it.c];
+  let list = CASES.filter(x => x.sec === c.sec && x.block === c.block);
+  if (list.length < 4) { const extra = shuffle(CASES.filter(x => x.sec === c.sec && x.block !== c.block)).slice(0, 4 - list.length); list = list.concat(extra); }
+  if (list.length > 7) list = [c, ...shuffle(list.filter(x => x !== c)).slice(0, 6)].sort((a, b) => CASES.indexOf(a) - CASES.indexOf(b));
+  return list.map(x => ({ id: x.id, t: x.tag, d: x.block }));
+}
+const correctId = item => item.kind === 'sound' ? item.ph : item.kind === 'red' ? redKey(item.r) : item.it.c;
+const KIND_NAME = { sound: 'Звуковое явление', inton: 'Интонация', red: 'Редукция' };
+const secLabel = s => s === 'red' ? 'Редукция' : 'Section ' + SEC[s].num;
+
+/* ---------- main practice / exam runner ---------- */
+function runner(host, items, opts) {
+  if (!items.length) { host.innerHTML = '<p class="muted">Нет заданий для выбранных настроек.</p>'; return; }
+  let queue = opts.fixed ? items.slice() : shuffle(items.slice()), pos = 0, cur, st;
+  const results = [];
+  let answered = 0, full = 0;
+  const limit = opts.limit || 0;
+
+  function next() {
+    if (limit && answered >= limit) return finish();
+    if (pos >= queue.length) { queue = shuffle(items.slice()); pos = 0; }
+    cur = queue[pos++];
+    st = { stage: null, markOk: null, mcOk: null, selfOk: null, sel: 0, marks: [], bounds: [] };
+    const sec = cur.sec;
+    const tb = (cur.kind === 'inton' && cur.it.tb) || (cur.kind === 'red' && cur.r.tb);
+    host.innerHTML = `<div class="q" style="--c:${COLORS[sec]}">
+      <div class="qmeta"><span class="kind">${cur.kind === 'red' ? 'Редукция' : secLabel(sec) + ' · ' + KIND_NAME[cur.kind]}</span>
+        <span>${limit ? `Задание ${answered + 1} из ${limit} · ` : ''}полностью верно ${full} из ${answered}</span></div>
+      ${limit ? `<div class="pbar"><i style="width:${answered / limit * 100}%"></i></div>` : ''}
+      <div class="prompt"></div><div class="stage"></div><div class="fb" hidden></div><div class="say" hidden></div></div>`;
+    const prompt = host.querySelector('.prompt');
+    if (cur.kind === 'sound') {
+      prompt.innerHTML = `<p class="sent" style="font-size:clamp(24px,5vw,30px)">${soundHTML(cur.raw)}</p>`;
+      stageMC();
+    } else if (cur.kind === 'red') {
+      prompt.innerHTML = `<p class="sent">${markedHTML(cur.r.s)}${tb ? '<span class="tb">из учебника</span>' : ''}</p>`;
+      stageMC();
+    } else {
+      const it = cur.it;
+      prompt.innerHTML = (it.x ? `<p class="sent small ctx">— ${markedHTML(it.x)}</p>` : '');
+      if (opts.self) stageMark(); else { prompt.innerHTML += `<p class="sent">${it.x ? '— ' : ''}${markedHTML(it.s, it.p)}${tb ? '<span class="tb">из учебника</span>' : ''}</p>` + tgBlock(it.s); stageMC(); }
+    }
+  }
+
+  /* --- self-marking --- */
+  function stageMark() {
+    st.stage = 'mark';
+    const it = cur.it, toks = tokenize(it.s), ws = words(toks);
+    st.toks = toks; st.ws = ws;
+    st.marks = ws.map(() => null); st.bounds = ws.map(() => null);
+    st.pr = it.p ? findPhrase(toks, it.p) : null;
+    const stage = host.querySelector('.stage');
+    stage.innerHTML = `${it.h ? `<div class="hint"><b>Ситуация:</b> ${esc(it.h)}</div>` : ''}
+      <div class="task">Расставь ударения, ядерные тоны и границы групп. Нажми на слово, потом на знак.</div>
+      <div class="markline en" aria-label="Предложение для разметки"></div>
+      <div class="palette">
+        <div class="selinfo"></div>
+        <div class="prow"><span class="lbl">Ударение</span>${pk('ˈ', 'head')}${pk('·', 'partial')}${pk('ˌ', 'tail')}</div>
+        <div class="prow"><span class="lbl">Ядерный тон</span>${pk('ˋ', 'High Fall')}${pk('ˎ', 'Low Fall')}${pk('ˏ', 'Low Rise')}${pk('ˊ', 'High Rise')}${pk('ˇ', 'Fall-Rise')}${pk('>', 'Mid Level')}${pk('', 'убрать', '✕')}</div>
+        <div class="prow"><span class="lbl">Граница после</span>${bk(null, 'нет', '—')}${bk('~', 'группа', WAVE)}${bk('|', 'пауза', BAR)}</div>
+      </div>
+      <div class="btns"><button class="btn primary chk">Проверить разметку</button><button class="btn skip">Показать ключ</button></div>`;
+    drawLine();
+  }
+  const pk = (ch, label, glyph) => `<button class="pk" data-mk="${esc(ch)}" title="${esc(MARK_NAME[ch] || label)}"><span class="g">${esc(glyph || ch)}</span><small>${esc(label)}</small></button>`;
+  const bk = (b, label, glyph) => `<button class="pk" data-bd="${b || ''}" title="${esc(label)}"><span class="g">${glyph}</span><small>${esc(label)}</small></button>`;
+  function wordHTML(t, mark, i) {
+    // insert the student's mark where the key puts its main mark (or before the first letter)
+    let at = t.mainAt;
+    if (at === null || at === undefined) { const m = t.plain.search(/[A-Za-z]/); at = m < 0 ? 0 : m; }
+    const p = t.plain;
+    let h = esc(p.slice(0, at)) + (mark ? `<span class="mk">${esc(mark)}</span>` : '') + esc(p.slice(at));
+    if (st.pr && i >= st.pr[0] && i <= st.pr[1]) h = `<b>${h}</b>`;
+    return h;
+  }
+  function drawLine(check) {
+    const line = host.querySelector('.markline');
+    line.innerHTML = st.ws.map((t, i) => {
+      const errN = check && check.nucErr.has(i), errB = check && check.bErr.has(i);
+      let h = `<button class="tok${i === st.sel && !check ? ' sel' : ''}${errN ? ' terr' : ''}" data-w="${i}" ${check ? 'disabled' : ''}>${wordHTML(t, st.marks[i], i)}</button>`;
+      if (st.bounds[i]) h += `<span class="bnd${errB ? ' berr' : ''}">${bndHTML(st.bounds[i])}</span>`;
+      else if (errB) h += '<span class="miss" title="здесь граница"></span>';
+      return h;
+    }).join('');
+    if (!check) {
+      const t = st.ws[st.sel];
+      host.querySelector('.selinfo').innerHTML = `Выбрано: <b class="en" style="font-size:16px">${esc(t.plain)}</b>`;
+      host.querySelectorAll('[data-mk]').forEach(b => b.setAttribute('aria-pressed', (st.marks[st.sel] || '') === b.dataset.mk && b.dataset.mk !== ''));
+      host.querySelectorAll('[data-bd]').forEach(b => b.setAttribute('aria-pressed', (st.bounds[st.sel] || '') === b.dataset.bd));
+    }
+  }
+  function checkMarks(skip) {
+    const ws = st.ws, toks = st.toks;
+    const keyB = ws.map(() => null); let wi = -1;
+    toks.forEach(t => { if (t.b) keyB[wi] = t.b; else wi++; });
+    const nucErr = new Set(), bErr = new Set(); const notes = [];
+    let stressKey = 0, stressHit = 0;
+    ws.forEach((t, i) => {
+      const kc = t.nuc ? toneCat(t.nuc) : null, sc = st.marks[i] && NUC.includes(st.marks[i]) ? toneCat(st.marks[i]) : null;
+      if (kc !== sc) nucErr.add(i);
+      else if (kc && t.nuc !== st.marks[i]) notes.push(`«${t.plain}»: ${MARK_NAME[st.marks[i]]} вместо ${MARK_NAME[t.nuc]} — тот же тип тона, засчитано.`);
+      if (!!keyB[i] !== !!st.bounds[i]) bErr.add(i);
+      if (t.marks.some(m => m.ch === 'ˈ')) { stressKey++; if (st.marks[i] === 'ˈ') stressHit++; }
+    });
+    const ok = !nucErr.size && !bErr.size;
+    st.markOk = skip ? false : ok;
+    drawLine({ nucErr, bErr });
+    host.querySelector('.palette').remove();
+    host.querySelector('.stage .btns').remove();
+    const it = cur.it, tb = it.tb;
+    const res = document.createElement('div');
+    res.className = 'fb';
+    res.innerHTML = skip ? `<div class="verdict bad">Ключ разметки</div>` : `<div class="verdict ${ok ? 'ok' : 'bad'}">${ok ? 'Разметка верна!' : 'Есть расхождения с ключом.'}</div>
+      <div class="cmp"><div class="row"><span class="lbl">Ядра</span><span class="${nucErr.size ? 'bad' : 'ok'}">${nucErr.size ? 'ошибки в словах: ' + [...nucErr].map(i => '«' + esc(ws[i].plain.replace(/[^\w’'-]/g, '')) + '»').join(', ') : 'все верно'}</span></div>
+      <div class="row"><span class="lbl">Границы</span><span class="${bErr.size ? 'bad' : 'ok'}">${bErr.size ? 'не совпадают (пунктир — пропущенная граница)' : 'все верно'}</span></div>
+      <div class="row"><span class="lbl">Ударения</span><span class="muted">совпало ${stressHit} из ${stressKey} (в шкале допустимы варианты, на оценку не влияет)</span></div>
+      ${notes.map(n => `<div class="muted">${esc(n)}</div>`).join('')}</div>`;
+    res.innerHTML += `<div><span class="lbl">Ключ</span><p class="sent" style="margin-top:2px">${it.x ? '— ' : ''}${markedHTML(it.s, it.p)}${tb ? '<span class="tb">из учебника</span>' : ''}</p></div>`;
+    host.querySelector('.stage').appendChild(res);
+    const holder = document.createElement('div'); holder.className = 'stage2';
+    host.querySelector('.stage').appendChild(holder);
+    stageMC(holder);
+  }
+
+  /* --- identification --- */
+  function stageMC(where) {
+    st.stage = 'mc';
+    const target = where || host.querySelector('.stage');
+    st.opts = optionsFor(cur);
+    const ask = cur.kind === 'sound' ? 'Шаг 1. Какое звуковое явление происходит на стыке согласных, отмеченных дугой?' : cur.kind === 'red' ? `Шаг 1. К какой группе служебных слов относится «${cur.r.w}» и редуцируется ли оно в этом предложении?` : (cur.it.p ? `Шаг 1. Выделенная фраза — «${cur.it.p}». Как она произносится в этом предложении и с какой целью?` : 'Шаг 1. Каким тоном произносится первая (non-final) интонационная группа и с какой целью?');
+    const hint = '';
+    target.insertAdjacentHTML('beforeend', `${hint}<div class="task" style="margin-top:6px">${esc(ask)}</div>
+      <div class="opts">${st.opts.map((o, i) => `<button class="opt" data-o="${o.id}"><kbd>${i + 1}</kbd><span>${esc(o.t)}</span><span class="d">${esc(o.d)}</span></button>`).join('')}</div>`);
+  }
+  function pickMC(id) {
+    if (st.stage !== 'mc') return;
+    const ok = id === correctId(cur); st.mcOk = ok; st.stage = 'say';
+    host.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (b.dataset.o === correctId(cur)) b.classList.add('right'); else if (b.dataset.o === id) b.classList.add('wrong'); else b.classList.add('dim'); });
+    const fb = host.querySelector('.q > .fb'); fb.hidden = false;
+    let why = '';
+    if (cur.kind === 'inton') { const c = CASE[cur.it.c]; why = c.note || ''; }
+    if (cur.kind === 'sound') { const p = PH[cur.ph]; why = p.tag; }
+    if (cur.kind === 'red' && cur.r.note) why = cur.r.note;
+    fb.innerHTML = `<div class="verdict ${ok ? 'ok' : 'bad'}">${ok ? 'Верно!' : 'Правильно: ' + esc(st.opts.find(o => o.id === correctId(cur)).t)}</div>${why ? `<div class="muted">${esc(why)}</div>` : ''}`;
+    const say = host.querySelector('.say'); say.hidden = false;
+    say.innerHTML = `<div class="task">Шаг 2. Скажи полный комментарий вслух, как на зачёте. Потом открой образец и сравни.</div><div class="btns"><button class="btn primary reveal">Показать образец</button></div>`;
+    focusIf(say.querySelector('.reveal'));
+  }
+  function reveal() {
+    if (st.stage !== 'say') return; st.stage = 'grade';
+    const say = host.querySelector('.say');
+    let extra = '';
+    if (cur.kind === 'sound' && PH[cur.ph].ru) extra = `<div class="expl">${esc(PH[cur.ph].ru)}</div>`;
+    say.innerHTML = `<div><span class="lbl">Образец</span> ${LEGEND_INLINE}</div><div class="cmt">${commentHTML(commentFor(cur))}</div>${extra}
+      <div class="task" style="font-weight:500">Оцени себя:</div><div class="btns"><button class="btn good g-yes">Сказал(а) всё главное</button><button class="btn badb g-no">Пропустил(а) или ошибся(лась)</button></div>`;
+    focusIf(say.querySelector('.g-yes'));
+  }
+  function grade(ok) {
+    if (st.stage !== 'grade') return;
+    st.selfOk = ok; answered++;
+    const allOk = st.mcOk && ok && st.markOk !== false;
+    if (allOk) full++;
+    results.push({ item: cur, markOk: st.markOk, mcOk: st.mcOk, selfOk: ok, allOk });
+    if (!allOk && opts.retry) queue.splice(Math.min(pos + 3, queue.length), 0, cur);
+    next();
+  }
+  function finish() {
+    keyHandler = null;
+    const errs = results.filter(r => !r.allOk);
+    const mcOk = results.filter(r => r.mcOk).length, mk = results.filter(r => r.markOk !== null), mkOk = mk.filter(r => r.markOk).length;
+    host.innerHTML = `<div class="q"><div class="score">${full}<small> / ${answered} полностью верно</small></div>
+      <div class="muted">Определение явления: ${mcOk} из ${answered}${mk.length ? ` · разметка: ${mkOk} из ${mk.length}` : ''} · комментарий: ${results.filter(r => r.selfOk).length} из ${answered}</div>
+      <div class="btns">${errs.length ? `<button class="btn primary redo">Повторить ошибки (${errs.length})</button>` : ''}<button class="btn again">Новый набор</button>${opts.back ? '<button class="btn back">Настройки</button>' : ''}</div>
+      ${errs.length ? `<h3>Разбор</h3><div class="errs">${errs.map(r => errHTML(r)).join('')}</div>` : '<p>Без ошибок!</p>'}</div>`;
+    host.querySelector('.again').onclick = () => opts.again ? opts.again() : runner(host, items, opts);
+    if (errs.length) host.querySelector('.redo').onclick = () => runner(host, errs.map(r => r.item), Object.assign({}, opts, { limit: errs.length, fixed: false }));
+    if (opts.back) host.querySelector('.back').onclick = opts.back;
+  }
+  function errHTML(r) {
+    const it = r.item;
+    const what = [r.markOk === false ? 'разметка' : '', !r.mcOk ? 'определение' : '', !r.selfOk ? 'комментарий' : ''].filter(Boolean).join(', ');
+    const s = it.kind === 'sound' ? `<p class="sent small">${soundHTML(it.raw)}</p>` : it.kind === 'red' ? `<p class="sent small">${markedHTML(it.r.s)}</p>` : `<p class="sent small">${markedHTML(it.it.s, it.it.p)}</p>`;
+    return `<div class="err" style="--c:${COLORS[it.sec]}"><span class="qmeta"><span class="kind">${it.kind === 'red' ? 'Редукция' : secLabel(it.sec) + ' · ' + KIND_NAME[it.kind]}</span><span class="bad">${what}</span></span>${s}<div class="cmt">${commentHTML(commentFor(it))}</div></div>`;
+  }
+
+  host.onclick = e => {
+    const tk = e.target.closest('.tok'); if (tk && !tk.disabled && st.stage === 'mark') { st.sel = +tk.dataset.w; drawLine(); return; }
+    const m = e.target.closest('[data-mk]'); if (m && st.stage === 'mark') { st.marks[st.sel] = m.dataset.mk || null; drawLine(); return; }
+    const bd = e.target.closest('[data-bd]'); if (bd && st.stage === 'mark') { st.bounds[st.sel] = bd.dataset.bd || null; drawLine(); return; }
+    if (e.target.closest('.chk')) return checkMarks(false);
+    if (e.target.closest('.skip')) return checkMarks(true);
+    const o = e.target.closest('.opt'); if (o && !o.disabled) return pickMC(o.dataset.o);
+    if (e.target.closest('.reveal')) return reveal();
+    if (e.target.closest('.g-yes')) return grade(true);
+    if (e.target.closest('.g-no')) return grade(false);
+  };
+  keyHandler = e => {
+    if (st.stage === 'mc') { const n = +e.key; if (n >= 1 && n <= st.opts.length) { e.preventDefault(); pickMC(st.opts[n - 1].id); } }
+    else if (st.stage === 'say' && (e.key === ' ' || e.key === 'Enter') && e.target.tagName !== 'BUTTON') { e.preventDefault(); reveal(); }
+    else if (st.stage === 'mark' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft') && e.target.tagName !== 'INPUT') { e.preventDefault(); st.sel = Math.max(0, Math.min(st.ws.length - 1, st.sel + (e.key === 'ArrowRight' ? 1 : -1))); drawLine(); }
+  };
+  next();
+}
+const LEGEND_INLINE = '';
+
+/* ---------- exam ---------- */
+function renderExam() {
+  const cfg = Object.assign({ secs: ['s1', 's2', 's3', 's4', 'red'], types: ['sound', 'inton'], mode: 'comments', n: 20, self: store.get('self', true) }, store.get('exam', {}));
+  app.innerHTML = header(true) + `<div class="sechead" style="--c:${COLORS.exam}"><span class="num">Перед экзаменом</span><h2 style="margin:0">Всё вперемешку</h2><span class="muted">Задания идут из разных секций по очереди, каждый раз набор новый. В конце будет разбор ошибок.</span></div><section id="pane"></section>`;
+  const pane = app.querySelector('#pane');
+  function setup() {
+    keyHandler = null;
+    const chip = (grp, v, t, on) => `<button class="chip" data-g="${grp}" data-v="${v}" aria-pressed="${on}">${t}</button>`;
+    pane.innerHTML = `<div class="panel" style="display:grid;gap:14px">
+      <div><div class="lbl">Что тренируем</div><div class="chips" style="margin-top:6px">${chip('mode', 'comments', 'Комментарии', cfg.mode === 'comments')}${chip('mode', 'theory', 'Теория (тест)', cfg.mode === 'theory')}${chip('mode', 'build', 'Собери комментарий', cfg.mode === 'build')}${chip('mode', 'error', 'Найди ошибку', cfg.mode === 'error')}${chip('mode', 'pairs', 'Пары', cfg.mode === 'pairs')}${chip('mode', 'blitz', 'Блиц', cfg.mode === 'blitz')}</div></div>
+      <div><div class="lbl">Секции</div><div class="chips" style="margin-top:6px">${SECTIONS.map(s => chip('secs', s.id, 'Section ' + s.num, cfg.secs.includes(s.id))).join('')}${chip('secs', 'red', 'Редукция', cfg.secs.includes('red'))}</div></div>
+      ${['comments', 'build', 'error', 'blitz'].includes(cfg.mode) ? `<div><div class="lbl">Для секций I–IV</div><div class="chips" style="margin-top:6px">${chip('types', 'sound', 'Звуковые явления', cfg.types.includes('sound'))}${chip('types', 'inton', 'Интонация', cfg.types.includes('inton'))}</div></div>
+` : ''}
+      ${cfg.mode === 'blitz' ? '' : `<div><div class="lbl">Количество</div><div class="chips" style="margin-top:6px">${[10, 20, 40].map(n => chip('n', n, n + ' заданий', cfg.n === n)).join('')}</div></div>`}
+      <div class="btns"><button class="btn primary start">Начать</button></div></div>`;
+  }
+  pane.onclick = e => {
+    const c = e.target.closest('.chip[data-g]');
+    if (c) {
+      const g = c.dataset.g, v = c.dataset.v;
+      if (g === 'mode') cfg.mode = v; else if (g === 'n') cfg.n = +v;
+      else { const a = cfg[g]; if (a.includes(v)) { if (a.length > 1) a.splice(a.indexOf(v), 1); } else a.push(v); }
+      store.set('exam', cfg); setup(); return;
+    }
+    if (e.target.closest('.start')) start();
+  };
+  function start() {
+    const gpool = () => ITEMS.filter(i => cfg.secs.includes(i.sec) && (i.sec === 'red' || cfg.types.includes(i.kind)));
+    if (cfg.mode === 'build' || cfg.mode === 'error') { const pk = balanced(gpool(), i => i.sec + ':' + i.kind, cfg.n); return (cfg.mode === 'build' ? buildGame : errorGame)(pane, pk, { limit: Math.min(cfg.n, pk.length), back: setup }); }
+    if (cfg.mode === 'pairs') { const ps = shuffle(PAIRS.filter(p => cfg.secs.includes(pairSec(p)))); return pairsGame(pane, ps, { limit: Math.min(cfg.n, ps.length), back: setup }); }
+    if (cfg.mode === 'blitz') return blitzGame(pane, gpool(), { key: 'mix', back: setup });
+    if (cfg.mode === 'theory') {
+      const qs = cfg.secs.flatMap(s => QUIZ[s].map(q => ({ q, sec: s })));
+      return quizRunner(pane, balanced(qs, x => x.sec, cfg.n), { limit: Math.min(cfg.n, qs.length), back: setup });
+    }
+    const pool = ITEMS.filter(i => cfg.secs.includes(i.sec) && (i.sec === 'red' || cfg.types.includes(i.kind)));
+    const pick = balanced(pool, i => i.sec + ':' + i.kind + ':' + (i.kind === 'inton' ? i.it.c : i.kind === 'sound' ? i.ph : redKey(i.r)), cfg.n);
+    runner(pane, pick, { self: false, limit: pick.length, fixed: true, back: setup, again: start });
+  }
+  setup();
+}
+/* round-robin over groups so every section / phenomenon / case shows up */
+function balanced(pool, keyFn, n) {
+  const groups = {};
+  shuffle(pool.slice()).forEach(x => (groups[keyFn(x)] = groups[keyFn(x)] || []).push(x));
+  // interleave by top-level key (section) first
+  const keys = shuffle(Object.keys(groups));
+  const bySec = {};
+  keys.forEach(k => (bySec[k.split(':')[0]] = bySec[k.split(':')[0]] || []).push(k));
+  const secs = shuffle(Object.keys(bySec));
+  const out = [];
+  let round = 0;
+  while (out.length < n) {
+    let added = false;
+    for (const s of secs) {
+      const ks = bySec[s]; if (!ks.length) continue;
+      const k = ks[round % ks.length]; const g = groups[k];
+      if (g && g.length) { out.push(g.shift()); added = true; if (out.length >= n) break; }
+      else { ks.splice(ks.indexOf(k), 1); }
+    }
+    round++;
+    if (!added && secs.every(s => !bySec[s].length)) break;
+    if (round > 5000) break;
+  }
+  return shuffle(out);
+}
+
+route();
+
+</script>
+</body>
+</html>
